@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { FinanceProvider } from './context/FinanceContext'
 import TabBar from './components/layout/TabBar'
+import InstallBanner from './components/ui/InstallBanner'
 import ProfileScreen from './pages/auth/ProfileScreen'
 import ModeSelector from './pages/ModeSelector'
 
@@ -68,6 +69,7 @@ function AuthGate() {
       <div className="app-shell" data-mode={mode}>
         <AppRoutes />
         <TabBar />
+        <InstallBanner />
       </div>
     </FinanceProvider>
   )
