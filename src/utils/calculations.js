@@ -4,8 +4,12 @@ export const calcTotalesPersonal = (state) => {
     .reduce((s, i) => s + i.monto, 0)
 
   const totalPresupuesto = Object.values(state.personal.presupuesto.categorias)
-    .flatMap(c => c.items)
-    .reduce((s, i) => s + i.monto, 0)
+    .reduce((s, cat) => {
+      const catBudget = cat.presupuesto != null
+        ? cat.presupuesto
+        : cat.items.reduce((cs, i) => cs + i.monto, 0)
+      return s + catBudget
+    }, 0)
 
   const disponible = totalIngresos - totalPresupuesto
   const porcentajeUsado = totalIngresos > 0 ? (totalPresupuesto / totalIngresos) * 100 : 0

@@ -187,7 +187,12 @@ export function reducer(state, action) {
             ...state.personal.presupuesto,
             categorias: {
               ...state.personal.presupuesto.categorias,
-              [action.key]: { ...catActual, emoji: action.emoji, nombre: action.nombre },
+              [action.key]: {
+                ...catActual,
+                emoji: action.emoji,
+                nombre: action.nombre,
+                ...(action.presupuesto !== undefined && { presupuesto: action.presupuesto }),
+              },
             },
           },
         },
