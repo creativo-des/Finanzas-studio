@@ -1,8 +1,26 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 
 export default function Sheet({ open, onClose, title, children }) {
+  const [vpHeight, setVpHeight] = useState(
+    () => window.visualViewport?.height ?? window.innerHeight
+  )
+
+  useEffect(() => {
+    if (!open) return
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => setVpHeight(vv.height)
+    update()
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [open])
+
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
     else document.body.style.overflow = ''
@@ -30,7 +48,7 @@ export default function Sheet({ open, onClose, title, children }) {
             }}
           />
 
-          {/* Wrapper de centrado — NO usar transform en el motion.div porque drag lo sobrescribe */}
+          {/* Centrado wrapper */}
           <div
             style={{
               position: 'fixed',
@@ -43,7 +61,7 @@ export default function Sheet({ open, onClose, title, children }) {
               pointerEvents: 'none',
             }}
           >
-            {/* Panel animado */}
+            {/* Panel animado — flex column para header fijo + body scrollable */}
             <motion.div
               initial={{ y: '100%', opacity: 0.8 }}
               animate={{ y: 0, opacity: 1 }}
@@ -59,13 +77,13 @@ export default function Sheet({ open, onClose, title, children }) {
                 background: 'var(--bg-surface-2)',
                 borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
                 borderTop: '1px solid var(--border-strong)',
-                paddingBottom: 'calc(24px + env(safe-area-inset-bottom))',
-                maxHeight: '92dvh',
-                overflowY: 'auto',
+                maxHeight: `${vpHeight * 0.92}px`,
+                display: 'flex',
+                flexDirection: 'column',
                 pointerEvents: 'all',
               }}
             >
-              {/* Drag handle */}
+              {/* Drag handle — no scrollable */}
               <div style={{
                 width: '36px',
                 height: '4px',
@@ -75,13 +93,14 @@ export default function Sheet({ open, onClose, title, children }) {
                 flexShrink: 0,
               }} />
 
-              {/* Header */}
+              {/* Header — no scrollable */}
               {title && (
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '16px 20px 0',
+                  flexShrink: 0,
                 }}>
                   <h2 style={{
                     fontFamily: 'Space Grotesk, sans-serif',
@@ -112,7 +131,15 @@ export default function Sheet({ open, onClose, title, children }) {
                 </div>
               )}
 
-              <div style={{ padding: '20px' }}>
+              {/* Contenido scrollable */}
+              <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehaviorY: 'contain',
+                padding: '20px',
+                paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
+              }}>
                 {children}
               </div>
             </motion.div>

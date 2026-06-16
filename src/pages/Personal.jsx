@@ -10,6 +10,8 @@ import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import FAB from '../components/ui/FAB'
 import Sheet from '../components/ui/Sheet'
+import SwipeRow from '../components/ui/SwipeRow'
+import ConfirmDeleteSheet from '../components/ui/ConfirmDeleteSheet'
 import AmountInput from '../components/ui/AmountInput'
 import Toast from '../components/ui/Toast'
 import TransactionList from '../components/personal/TransactionList'
@@ -49,6 +51,10 @@ export default function Personal() {
   const [budgetQuickSheet, setBudgetQuickSheet] = useState(false)
   const [budgetQuickKey, setBudgetQuickKey]     = useState(null)
   const [budgetQuickVal, setBudgetQuickVal]     = useState(0)
+
+  // Confirmation delete modals
+  const [confirmTx, setConfirmTx]   = useState(null)
+  const [confirmIng, setConfirmIng] = useState(null)
 
   // Income sheet
   const [ingresoSheet, setIngresoSheet] = useState(false)
@@ -202,7 +208,11 @@ export default function Personal() {
       {/* ── Gastos ───────────────────────────────────────── */}
       {tab === 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <TransactionList transacciones={transacciones} onDelete={handleDelete} />
+          <TransactionList
+            transacciones={transacciones}
+            onDelete={handleDelete}
+            onRequestDelete={(tx) => setConfirmTx(tx)}
+          />
           <PaymentMethodsBreakdown transacciones={transacciones} />
         </div>
       )}
@@ -372,32 +382,40 @@ export default function Personal() {
             </div>
           ) : (
             state.personal.ingresos.map(ing => (
-              <motion.div
+              <SwipeRow
                 key={ing.id}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => openEditIngreso(ing)}
+                onRequestDelete={() => setConfirmIng(ing)}
                 style={{
-                  background: 'var(--bg-surface)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)', padding: '14px 16px',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  cursor: 'pointer', opacity: ing.activo ? 1 : 0.45,
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                  opacity: ing.activo ? 1 : 0.45,
                 }}
               >
-                <div>
-                  <p style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                    {ing.nombre}
-                  </p>
-                  <span className={`badge ${ing.tipo === 'fijo' ? 'badge-purple' : 'badge-blue'}`}>
-                    {ing.tipo}
-                  </span>
+                <div
+                  onClick={() => openEditIngreso(ing)}
+                  style={{
+                    padding: '14px 16px',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div>
+                    <p style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                      {ing.nombre}
+                    </p>
+                    <span className={`badge ${ing.tipo === 'fijo' ? 'badge-purple' : 'badge-blue'}`}>
+                      {ing.tipo}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '15px', color: 'var(--income)' }}>
+                      {formatCOP(ing.monto)}
+                    </p>
+                    <Pencil size={13} color="var(--text-muted)" />
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '15px', color: 'var(--income)' }}>
-                    {formatCOP(ing.monto)}
-                  </p>
-                  <Pencil size={13} color="var(--text-muted)" />
-                </div>
-              </motion.div>
+              </SwipeRow>
             ))
           )}
         </div>
@@ -527,6 +545,30 @@ export default function Personal() {
           </motion.button>
         </div>
       </Sheet>
+
+      {/* Confirmación: eliminar transacción */}
+      <ConfirmDeleteSheet
+        open={!!confirmTx}
+        onClose={() => setConfirmTx(null)}
+        itemName={confirmTx?.concepto}
+        onConfirm={() => {
+          handleDelete(confirmTx.id)
+          setConfirmTx(null)
+        }}
+      />
+
+      {/* Confirmación: eliminar ingreso */}
+      <ConfirmDeleteSheet
+        open={!!confirmIng}
+        onClose={() => setConfirmIng(null)}
+        itemName={confirmIng?.nombre}
+        onConfirm={() => {
+          dispatch({ type: ACTIONS.DELETE_INGRESO, id: confirmIng.id })
+          haptic.light()
+          showToast({ message: 'Ingreso eliminado', type: 'error' })
+          setConfirmIng(null)
+        }}
+      />
     </PageLayout>
   )
 }

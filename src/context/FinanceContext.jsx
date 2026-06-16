@@ -27,21 +27,27 @@ const loadLocal = (profileId) => {
 
 export function FinanceProvider({ children, profileId }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => loadLocal(profileId))
-  const syncTimer = useRef(null)
+  const syncTimer    = useRef(null)
+  const cloudReady   = useRef(false)  // prevent initial race: don't save before cloud data loads
 
-  // On mount: load cloud data and replace local state (cloud is authoritative)
+  // On mount: load cloud data (authoritative source)
   useEffect(() => {
+    cloudReady.current = false
     supabase
       .from('finance_data')
       .select('data')
       .eq('user_id', profileId)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error && error.code !== 'PGRST116') {
+          console.error('[FinanceContext] cloud load error:', error)
+        }
         if (data?.data) {
           const merged = mergeWithSeed(data.data)
           dispatch({ type: ACTIONS.IMPORT_DATA, data: merged })
           localStorage.setItem(makeKey(profileId), JSON.stringify(merged))
         }
+        cloudReady.current = true
       })
   }, [profileId])
 
@@ -51,12 +57,16 @@ export function FinanceProvider({ children, profileId }) {
       localStorage.setItem(makeKey(profileId), JSON.stringify(state))
     } catch { /* storage full */ }
 
+    if (!cloudReady.current) return  // skip cloud save until initial load completes
+
     clearTimeout(syncTimer.current)
     syncTimer.current = setTimeout(() => {
       supabase
         .from('finance_data')
         .upsert({ user_id: profileId, data: state, updated_at: new Date().toISOString() })
-        .then()
+        .then(({ error }) => {
+          if (error) console.error('[FinanceContext] cloud save error:', error)
+        })
     }, 2000)
 
     return () => clearTimeout(syncTimer.current)

@@ -15,7 +15,7 @@ const CAT_NOMBRE = {
   gastosAnuales: 'Gastos Anuales', cuidadoPersonal: 'Cuidado', entretenimiento: 'Entretenim.', otros: 'Otros',
 }
 
-export default function TransactionItem({ tx, onDelete }) {
+export default function TransactionItem({ tx, onDelete, onRequestDelete }) {
   const [swiped, setSwiped] = useState(false)
 
   return (
@@ -27,7 +27,7 @@ export default function TransactionItem({ tx, onDelete }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => { onDelete(tx.id); setSwiped(false) }}
+            onClick={() => { setSwiped(false); onRequestDelete ? onRequestDelete(tx) : onDelete(tx.id) }}
             style={{
               position: 'absolute',
               right: 0,

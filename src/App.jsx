@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { FinanceProvider } from './context/FinanceContext'
@@ -31,6 +31,7 @@ const Fallback = () => (
 
 function AppRoutes() {
   const location = useLocation()
+  const { mode } = useAuth()
   return (
     <AnimatePresence mode="wait">
       <Suspense fallback={<Fallback />}>
@@ -38,7 +39,7 @@ function AppRoutes() {
           <Route path="/"                      element={<Dashboard />} />
           <Route path="/personal"              element={<Personal />} />
           <Route path="/personal/mes/:num"     element={<PersonalMes />} />
-          <Route path="/estudio"               element={<Estudio />} />
+          <Route path="/estudio"               element={mode === 'estudio' ? <Estudio /> : <Navigate to="/" replace />} />
           <Route path="/suscripciones"         element={<Suscripciones />} />
           <Route path="/mas"                   element={<Mas />} />
           <Route path="/deudas"                element={<Deudas />} />
