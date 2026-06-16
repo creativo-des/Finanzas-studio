@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Pencil, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { Plus, Pencil, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { calcTotalPatrimonio } from '../utils/calculations'
@@ -9,7 +9,6 @@ import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import Sheet from '../components/ui/Sheet'
 import AmountInput from '../components/ui/AmountInput'
-import FAB from '../components/ui/FAB'
 import Toast from '../components/ui/Toast'
 import { useToast } from '../hooks/useToast'
 import { useHaptic } from '../hooks/useHaptic'
@@ -156,45 +155,59 @@ export default function Patrimonio() {
       {/* Activos */}
       <div style={{ padding: '0 20px' }}>
         <p className="label-uppercase" style={{ marginBottom: '12px' }}>Activos</p>
-        {activos.length === 0 ? (
+        {activos.length === 0 && (
           <div style={{
             background: 'var(--bg-surface)', border: '1px solid var(--border)',
             borderRadius: 'var(--radius-lg)', padding: '28px 20px', textAlign: 'center',
           }}>
             <p style={{ fontSize: '28px', marginBottom: '8px' }}>💼</p>
-            <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Agrega tus activos con el +</p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {activos.map(a => (
-              <motion.div
-                key={a.id}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => openEdit(a)}
-                style={{
-                  background: 'var(--bg-surface)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)', padding: '14px 16px',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  cursor: 'pointer',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '24px' }}>{a.emoji}</span>
-                  <div>
-                    <p style={{ fontSize: '15px', fontWeight: 500 }}>{a.nombre}</p>
-                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{a.tipo}</p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '15px', color: 'var(--income)' }}>
-                    {formatCOP(a.valorActual)}
-                  </p>
-                  <Pencil size={13} color="var(--text-muted)" />
-                </div>
-              </motion.div>
-            ))}
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Sin activos registrados</p>
           </div>
         )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {activos.map(a => (
+            <motion.div
+              key={a.id}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => openEdit(a)}
+              style={{
+                background: 'var(--bg-surface)', border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-lg)', padding: '14px 16px',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '24px' }}>{a.emoji}</span>
+                <div>
+                  <p style={{ fontSize: '15px', fontWeight: 500 }}>{a.nombre}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{a.tipo}</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '15px', color: 'var(--income)' }}>
+                  {formatCOP(a.valorActual)}
+                </p>
+                <Pencil size={13} color="var(--text-muted)" />
+              </div>
+            </motion.div>
+          ))}
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => { setNombre(''); setValor(0); setEmoji('💰'); setTipo('Cuenta de Ahorro'); setAddOpen(true) }}
+            style={{
+              width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
+              border: '1px dashed rgba(245,183,49,0.35)', background: 'rgba(245,183,49,0.06)',
+              color: 'var(--warning)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: '8px',
+            }}
+          >
+            <Plus size={15} /> Agregar activo
+          </motion.button>
+        </div>
       </div>
 
       {/* Pasivos */}
@@ -297,7 +310,6 @@ export default function Patrimonio() {
       </Sheet>
 
       <Toast toast={toast} />
-      <FAB onClick={() => { setNombre(''); setValor(0); setEmoji('💰'); setTipo('Cuenta de Ahorro'); setAddOpen(true) }} color="var(--warning)" />
     </PageLayout>
   )
 }

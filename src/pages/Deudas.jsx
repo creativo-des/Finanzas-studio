@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Pencil, CircleDollarSign } from 'lucide-react'
+import { Plus, Pencil, CircleDollarSign } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { calcTotalDeudas, calcAmortizacion } from '../utils/calculations'
@@ -11,7 +11,6 @@ import ProgressBar from '../components/ui/ProgressBar'
 import NumberAnimated from '../components/ui/NumberAnimated'
 import Sheet from '../components/ui/Sheet'
 import AmountInput from '../components/ui/AmountInput'
-import FAB from '../components/ui/FAB'
 import Toast from '../components/ui/Toast'
 import { useToast } from '../hooks/useToast'
 import { useHaptic } from '../hooks/useHaptic'
@@ -147,16 +146,17 @@ export default function Deudas() {
       <div style={{ padding: '0 20px 24px' }}>
         <p className="label-uppercase" style={{ marginBottom: '12px' }}>Créditos</p>
 
-        {deudas.length === 0 ? (
+        {deudas.length === 0 && (
           <div style={{
             background: 'var(--bg-surface)', border: '1px solid var(--border)',
             borderRadius: 'var(--radius-lg)', padding: '28px 20px', textAlign: 'center',
           }}>
             <p style={{ fontSize: '28px', marginBottom: '8px' }}>🏦</p>
-            <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Registra tus deudas con el +</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Sin créditos registrados</p>
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {deudas.map(d => {
               const pct = d.deudaInicial > 0 ? 100 - (d.deudaActual / d.deudaInicial) * 100 : 0
               const pagada = d.deudaActual <= 0
@@ -219,8 +219,21 @@ export default function Deudas() {
                 </div>
               )
             })}
-          </div>
-        )}
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => { setDTipo(''); setDDeudaInicial(0); setDMensualidad(0); setDEmoji('🏦'); setAddOpen(true) }}
+            style={{
+              width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
+              border: '1px dashed rgba(240,107,107,0.35)', background: 'rgba(240,107,107,0.06)',
+              color: 'var(--debt)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: '8px',
+            }}
+          >
+            <Plus size={15} /> Registrar deuda
+          </motion.button>
+        </div>
       </div>
 
       {/* Tarjetas de crédito */}
@@ -441,7 +454,6 @@ export default function Deudas() {
       </Sheet>
 
       <Toast toast={toast} />
-      <FAB onClick={() => { setDTipo(''); setDDeudaInicial(0); setDMensualidad(0); setDEmoji('🏦'); setAddOpen(true) }} color="var(--debt)" />
     </PageLayout>
   )
 }

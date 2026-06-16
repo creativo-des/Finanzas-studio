@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { formatCOP } from '../utils/formatCurrency'
@@ -9,7 +9,6 @@ import PageHeader from '../components/layout/PageHeader'
 import ProgressBar from '../components/ui/ProgressBar'
 import Sheet from '../components/ui/Sheet'
 import AmountInput from '../components/ui/AmountInput'
-import FAB from '../components/ui/FAB'
 import Toast from '../components/ui/Toast'
 import { useToast } from '../hooks/useToast'
 import { useHaptic } from '../hooks/useHaptic'
@@ -86,13 +85,14 @@ export default function Metas() {
 
       {/* Lista de metas */}
       <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {metas.length === 0 ? (
+        {metas.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
             <p style={{ fontSize: '32px', marginBottom: '8px' }}>🎯</p>
-            <p>Crea tu primera meta con el +</p>
+            <p>Crea tu primera meta de ahorro</p>
           </div>
-        ) : (
-          metas.map(meta => {
+        )}
+
+        {metas.map(meta => {
             const pct = meta.metaTotal > 0 ? Math.min(100, (meta.ahorroActual / meta.metaTotal) * 100) : 0
             const completada = pct >= 100
             return (
@@ -164,8 +164,21 @@ export default function Metas() {
                 )}
               </div>
             )
-          })
-        )}
+          })}
+
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => { setNombre(''); setMetaTotal(0); setMeses(12); setEmoji('💰'); setAddOpen(true) }}
+          style={{
+            width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
+            border: '1px dashed rgba(45,212,164,0.35)', background: 'rgba(45,212,164,0.06)',
+            color: 'var(--income)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', gap: '8px',
+          }}
+        >
+          <Plus size={15} /> Nueva meta
+        </motion.button>
       </div>
 
       {/* Sheet abono */}
@@ -243,7 +256,6 @@ export default function Metas() {
       </Sheet>
 
       <Toast toast={toast} />
-      <FAB onClick={() => { setNombre(''); setMetaTotal(0); setMeses(12); setEmoji('💰'); setAddOpen(true) }} color="var(--income)" />
     </PageLayout>
   )
 }

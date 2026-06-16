@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Pencil } from 'lucide-react'
+import { Plus, Pencil } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { calcSuscripcionesMes } from '../utils/calculations'
@@ -11,7 +11,6 @@ import PageHeader from '../components/layout/PageHeader'
 import Toggle from '../components/ui/Toggle'
 import Sheet from '../components/ui/Sheet'
 import AmountInput from '../components/ui/AmountInput'
-import FAB from '../components/ui/FAB'
 import Toast from '../components/ui/Toast'
 import { useToast } from '../hooks/useToast'
 import { useHaptic } from '../hooks/useHaptic'
@@ -177,7 +176,7 @@ export default function Suscripciones() {
       {state.suscripciones.length === 0 && (
         <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
           <p style={{ fontSize: '32px', marginBottom: '8px' }}>📺</p>
-          <p>Agrega tus suscripciones con el +</p>
+          <p>Sin suscripciones registradas</p>
         </div>
       )}
 
@@ -210,6 +209,23 @@ export default function Suscripciones() {
           </div>
         </div>
       )}
+
+      {/* Inline add button */}
+      <div style={{ padding: '0 20px 8px' }}>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={openAdd}
+          style={{
+            width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
+            border: '1px dashed rgba(124,111,247,0.35)', background: 'rgba(124,111,247,0.06)',
+            color: 'var(--accent)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', gap: '8px',
+          }}
+        >
+          <Plus size={15} /> Nueva suscripción
+        </motion.button>
+      </div>
 
       {/* Sheet: agregar / editar suscripción */}
       <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title={editSub ? 'Editar suscripción' : 'Nueva suscripción'}>
@@ -312,7 +328,6 @@ export default function Suscripciones() {
       </Sheet>
 
       <Toast toast={toast} />
-      <FAB onClick={openAdd} />
     </PageLayout>
   )
 }

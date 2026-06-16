@@ -11,7 +11,6 @@ import Sheet from '../components/ui/Sheet'
 import SwipeRow from '../components/ui/SwipeRow'
 import ConfirmDeleteSheet from '../components/ui/ConfirmDeleteSheet'
 import AmountInput from '../components/ui/AmountInput'
-import FAB from '../components/ui/FAB'
 import Toast from '../components/ui/Toast'
 import { useToast } from '../hooks/useToast'
 import { useHaptic } from '../hooks/useHaptic'
@@ -271,57 +270,64 @@ export default function Estudio() {
 
       {/* ── TAB: Ingresos ───────────── */}
       {tab === 0 && (
-        <div style={{ padding: '0 20px' }}>
-          {ingresosDelMes.length === 0 ? (
+        <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {ingresosDelMes.length === 0 && (
             <div style={{
               background: 'var(--bg-surface)', border: '1px solid var(--border)',
               borderRadius: 'var(--radius-lg)', padding: '32px 20px', textAlign: 'center',
             }}>
               <p style={{ fontSize: '32px', marginBottom: '8px' }}>💼</p>
-              <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>Registra tu primer ingreso del mes</p>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={openAddIngreso}
-                style={{ marginTop: '16px', padding: '12px 24px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--accent)', color: 'white', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, cursor: 'pointer' }}
-              >
-                + Agregar ingreso
-              </motion.button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {ingresosDelMes.map(i => (
-                <SwipeRow
-                  key={i.id}
-                  onRequestDelete={() => setConfirmIngreso(i)}
-                  style={{
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-lg)',
-                  }}
-                >
-                  <div
-                    onClick={() => openEditIngreso(i)}
-                    style={{
-                      padding: '14px 16px',
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div>
-                      <p style={{ fontSize: '15px', fontWeight: 500 }}>{i.cliente || 'Sin cliente'}</p>
-                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{i.servicio} · {formatFecha(i.fecha)}</p>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', color: 'var(--income)' }}>
-                        {formatCOP(i.monto)}
-                      </p>
-                      <span className={`badge ${i.estado === 'cobrado' ? 'badge-green' : i.estado === 'pendiente' ? 'badge-amber' : 'badge-purple'}`}>
-                        {i.estado}
-                      </span>
-                    </div>
-                  </div>
-                </SwipeRow>
-              ))}
+              <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>Sin ingresos registrados este mes</p>
             </div>
           )}
+
+          {ingresosDelMes.map(i => (
+            <SwipeRow
+              key={i.id}
+              onRequestDelete={() => setConfirmIngreso(i)}
+              style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-lg)',
+              }}
+            >
+              <div
+                onClick={() => openEditIngreso(i)}
+                style={{
+                  padding: '14px 16px',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <div>
+                  <p style={{ fontSize: '15px', fontWeight: 500 }}>{i.cliente || 'Sin cliente'}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{i.servicio} · {formatFecha(i.fecha)}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', color: 'var(--income)' }}>
+                    {formatCOP(i.monto)}
+                  </p>
+                  <span className={`badge ${i.estado === 'cobrado' ? 'badge-green' : i.estado === 'pendiente' ? 'badge-amber' : 'badge-purple'}`}>
+                    {i.estado}
+                  </span>
+                </div>
+              </div>
+            </SwipeRow>
+          ))}
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={openAddIngreso}
+            style={{
+              width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
+              border: '1px dashed rgba(45,212,164,0.35)', background: 'rgba(45,212,164,0.06)',
+              color: 'var(--income)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: '8px',
+            }}
+          >
+            <PlusIcon size={15} /> Agregar ingreso
+          </motion.button>
         </div>
       )}
 
@@ -342,45 +348,59 @@ export default function Estudio() {
             </motion.button>
           </div>
 
-          {gastosDelMes.length === 0 ? (
+          {gastosDelMes.length === 0 && (
             <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
               <p>Sin gastos este mes</p>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {gastosDelMes.map(g => (
-                <SwipeRow
-                  key={g.id}
-                  onRequestDelete={() => setConfirmGasto(g)}
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {gastosDelMes.map(g => (
+              <SwipeRow
+                key={g.id}
+                onRequestDelete={() => setConfirmGasto(g)}
+                style={{
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                }}
+              >
+                <div
+                  onClick={() => openEditGasto(g)}
                   style={{
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-lg)',
+                    padding: '14px 16px',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    cursor: 'pointer',
                   }}
                 >
-                  <div
-                    onClick={() => openEditGasto(g)}
-                    style={{
-                      padding: '14px 16px',
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div>
-                      <p style={{ fontSize: '15px', fontWeight: 500 }}>{g.concepto || 'Sin concepto'}</p>
-                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{g.categoria} · {formatFecha(g.fecha)}</p>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', color: 'var(--expense)' }}>
-                        -{formatCOP(g.monto)}
-                      </p>
-                      <Pencil size={12} color="var(--text-muted)" />
-                    </div>
+                  <div>
+                    <p style={{ fontSize: '15px', fontWeight: 500 }}>{g.concepto || 'Sin concepto'}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{g.categoria} · {formatFecha(g.fecha)}</p>
                   </div>
-                </SwipeRow>
-              ))}
-            </div>
-          )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', color: 'var(--expense)' }}>
+                      -{formatCOP(g.monto)}
+                    </p>
+                    <Pencil size={12} color="var(--text-muted)" />
+                  </div>
+                </div>
+              </SwipeRow>
+            ))}
+
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={openAddGasto}
+              style={{
+                width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
+                border: '1px dashed rgba(240,107,107,0.35)', background: 'rgba(240,107,107,0.06)',
+                color: 'var(--expense)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', gap: '8px',
+              }}
+            >
+              <PlusIcon size={15} /> Agregar gasto
+            </motion.button>
+          </div>
         </div>
       )}
 
@@ -758,12 +778,6 @@ export default function Estudio() {
 
       <Toast toast={toast} />
 
-      {(tab === 0 || tab === 1) && (
-        <FAB
-          onClick={() => tab === 0 ? openAddIngreso() : openAddGasto()}
-          color="var(--accent)"
-        />
-      )}
     </PageLayout>
   )
 }

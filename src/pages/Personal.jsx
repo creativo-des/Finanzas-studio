@@ -8,7 +8,6 @@ import { formatCOP } from '../utils/formatCurrency'
 import { nombreMes } from '../utils/dateHelpers'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
-import FAB from '../components/ui/FAB'
 import Sheet from '../components/ui/Sheet'
 import SwipeRow from '../components/ui/SwipeRow'
 import ConfirmDeleteSheet from '../components/ui/ConfirmDeleteSheet'
@@ -56,17 +55,17 @@ export default function Personal() {
   const [confirmTx, setConfirmTx]   = useState(null)
   const [confirmIng, setConfirmIng] = useState(null)
 
-  // Income sheet
+  // Income sheet (monthly)
   const [ingresoSheet, setIngresoSheet] = useState(false)
   const [editIngreso, setEditIngreso]   = useState(null)
-  const [iNombre, setINombre]           = useState('')
+  const [iFuente, setIFuente]           = useState('')
   const [iMonto, setIMonto]             = useState(0)
-  const [iTipo, setITipo]               = useState('fijo')
 
   const { mesActual, anioActual } = state.config
-  const totales = calcTotalesPersonal(state)
+  const totales = calcTotalesPersonal(state, mesActual, anioActual)
   const { transacciones, totalGastado } = calcTotalesMes(state, mesActual, anioActual)
   const disponibleReal = totales.totalIngresos - totalGastado
+  const ingresosMes = state.personal.ingresosMensuales?.[anioActual]?.[mesActual] || []
 
   // ── Category ────────────────────────────────────────────
   const openEditCat = (key) => {
@@ -133,25 +132,25 @@ export default function Personal() {
     showToast({ message: 'Gasto eliminado', type: 'error' })
   }
 
-  // ── Income ───────────────────────────────────────────────
+  // ── Income (monthly) ─────────────────────────────────────
   const openAddIngreso = () => {
-    setEditIngreso(null); setINombre(''); setIMonto(0); setITipo('fijo')
+    setEditIngreso(null); setIFuente(''); setIMonto(0)
     setIngresoSheet(true)
   }
 
   const openEditIngreso = (ing) => {
-    setEditIngreso(ing); setINombre(ing.nombre); setIMonto(ing.monto); setITipo(ing.tipo)
+    setEditIngreso(ing); setIFuente(ing.fuente); setIMonto(ing.monto)
     setIngresoSheet(true)
   }
 
   const handleSaveIngreso = () => {
-    if (!iNombre.trim() || !iMonto) return
+    if (!iFuente.trim() || !iMonto) return
     if (editIngreso) {
-      dispatch({ type: ACTIONS.UPDATE_INGRESO, id: editIngreso.id, payload: { nombre: iNombre.trim(), monto: iMonto, tipo: iTipo } })
+      dispatch({ type: ACTIONS.UPDATE_INGRESO_MES, id: editIngreso.id, mes: mesActual, anio: anioActual, payload: { fuente: iFuente.trim(), monto: iMonto } })
       haptic.success()
       showToast({ message: 'Ingreso actualizado ✓' })
     } else {
-      dispatch({ type: ACTIONS.ADD_INGRESO, payload: { nombre: iNombre.trim(), monto: iMonto, tipo: iTipo, activo: true } })
+      dispatch({ type: ACTIONS.ADD_INGRESO_MES, mes: mesActual, anio: anioActual, payload: { fuente: iFuente.trim(), monto: iMonto } })
       haptic.success()
       showToast({ message: 'Ingreso agregado ✓' })
     }
@@ -159,7 +158,7 @@ export default function Personal() {
   }
 
   const handleDeleteIngreso = () => {
-    dispatch({ type: ACTIONS.DELETE_INGRESO, id: editIngreso.id })
+    dispatch({ type: ACTIONS.DELETE_INGRESO_MES, id: editIngreso.id, mes: mesActual, anio: anioActual })
     haptic.light()
     showToast({ message: 'Ingreso eliminado', type: 'error' })
     setIngresoSheet(false)
@@ -223,6 +222,21 @@ export default function Personal() {
             onRequestDelete={(tx) => setConfirmTx(tx)}
           />
           <PaymentMethodsBreakdown transacciones={transacciones} />
+          <div style={{ padding: '0 20px' }}>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setSheetOpen(true)}
+              style={{
+                width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
+                border: '1px dashed rgba(124,111,247,0.35)', background: 'rgba(124,111,247,0.06)',
+                color: 'var(--accent)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', gap: '8px',
+              }}
+            >
+              <Plus size={15} /> Agregar gasto
+            </motion.button>
+          </div>
         </div>
       )}
 
@@ -277,7 +291,7 @@ export default function Personal() {
           </div>
 
           {Object.entries(state.personal.presupuesto.categorias).map(([key, cat]) => {
-            const total = cat.presupuesto != null ? cat.presupuesto : cat.items.reduce((s, i) => s + i.monto, 0)
+            const total = cat.presupuesto != null ? cat.presupuesto : cat.items.reduce((s, i) => s + i.monto / (i.duracionMeses || 1), 0)
             return (
               <div key={key} style={{
                 background: 'var(--bg-surface)', border: '1px solid var(--border)',
@@ -354,9 +368,16 @@ export default function Personal() {
                         </div>
                       </div>
                     </div>
-                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums', flexShrink: 0, marginLeft: '12px' }}>
-                      {formatCOP(item.monto)}
-                    </span>
+                    <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '12px' }}>
+                      <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
+                        {formatCOP(Math.round(item.monto / (item.duracionMeses || 1)))}
+                      </span>
+                      {(item.duracionMeses || 1) > 1 && (
+                        <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '1px' }}>
+                          /{item.duracionMeses} meses
+                        </p>
+                      )}
+                    </div>
                   </motion.div>
                 ))}
 
@@ -397,66 +418,73 @@ export default function Personal() {
             border: '1px solid rgba(45,212,164,0.2)',
             borderRadius: 'var(--radius-2xl)', padding: '20px',
           }}>
-            <p className="label-uppercase" style={{ marginBottom: '4px' }}>Total ingresos del mes</p>
+            <p className="label-uppercase" style={{ marginBottom: '4px' }}>Total ingresos · {nombreMes(mesActual)} {anioActual}</p>
             <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '32px', color: 'var(--income)' }}>
               {formatCOP(totales.totalIngresos)}
             </p>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              {state.personal.ingresos.filter(i => i.activo).length} fuentes activas
+              {ingresosMes.length} {ingresosMes.length === 1 ? 'fuente registrada' : 'fuentes registradas'} este mes
             </p>
           </div>
 
-          {state.personal.ingresos.length === 0 ? (
+          {ingresosMes.length === 0 && (
             <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
               <p style={{ fontSize: '28px', marginBottom: '8px' }}>💰</p>
-              <p>Agrega tus fuentes de ingreso con el +</p>
+              <p style={{ fontSize: '14px' }}>Sin ingresos este mes todavía</p>
+              <p style={{ fontSize: '12px', marginTop: '4px' }}>Agrega los ingresos que recibiste en {nombreMes(mesActual)}</p>
             </div>
-          ) : (
-            state.personal.ingresos.map(ing => (
-              <SwipeRow
-                key={ing.id}
-                onRequestDelete={() => setConfirmIng(ing)}
+          )}
+
+          {ingresosMes.map(ing => (
+            <SwipeRow
+              key={ing.id}
+              onRequestDelete={() => setConfirmIng(ing)}
+              style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-lg)',
+              }}
+            >
+              <div
+                onClick={() => openEditIngreso(ing)}
                 style={{
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)',
-                  opacity: ing.activo ? 1 : 0.45,
+                  padding: '14px 16px',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  cursor: 'pointer',
                 }}
               >
-                <div
-                  onClick={() => openEditIngreso(ing)}
-                  style={{
-                    padding: '14px 16px',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div>
-                    <p style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                      {ing.nombre}
-                    </p>
-                    <span className={`badge ${ing.tipo === 'fijo' ? 'badge-purple' : 'badge-blue'}`}>
-                      {ing.tipo}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '15px', color: 'var(--income)' }}>
-                      {formatCOP(ing.monto)}
-                    </p>
-                    <Pencil size={13} color="var(--text-muted)" />
-                  </div>
+                <div>
+                  <p style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)' }}>
+                    {ing.fuente}
+                  </p>
                 </div>
-              </SwipeRow>
-            ))
-          )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '15px', color: 'var(--income)' }}>
+                    {formatCOP(ing.monto)}
+                  </p>
+                  <Pencil size={13} color="var(--text-muted)" />
+                </div>
+              </div>
+            </SwipeRow>
+          ))}
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={openAddIngreso}
+            style={{
+              width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
+              border: '1px dashed rgba(45,212,164,0.35)', background: 'rgba(45,212,164,0.06)',
+              color: 'var(--income)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: '8px',
+            }}
+          >
+            <Plus size={15} /> Agregar ingreso
+          </motion.button>
         </div>
       )}
 
       <Toast toast={toast} />
-      <FAB
-        onClick={() => tab === 3 ? openAddIngreso() : setSheetOpen(true)}
-        color={tab === 3 ? 'var(--income)' : undefined}
-      />
 
       <AddTransactionSheet
         open={sheetOpen}
@@ -532,33 +560,24 @@ export default function Personal() {
         </Sheet>
       )}
 
-      {/* Sheet: agregar / editar ingreso */}
-      <Sheet open={ingresoSheet} onClose={() => setIngresoSheet(false)} title={editIngreso ? 'Editar ingreso' : 'Nuevo ingreso'}>
+      {/* Sheet: agregar / editar ingreso mensual */}
+      <Sheet open={ingresoSheet} onClose={() => setIngresoSheet(false)} title={editIngreso ? 'Editar ingreso' : `Ingreso · ${nombreMes(mesActual)}`}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <label className="input-label">Nombre</label>
-            <input className="input-field" value={iNombre} onChange={e => setINombre(e.target.value)} placeholder="Salario, freelance, arriendo..." />
+            <label className="input-label">Fuente</label>
+            <input className="input-field" value={iFuente} onChange={e => setIFuente(e.target.value)} placeholder="Salario, freelance, arriendo..." autoFocus={ingresoSheet} />
           </div>
           <div>
-            <label className="input-label">Monto mensual</label>
+            <label className="input-label">Monto recibido</label>
             <AmountInput value={iMonto} onChange={setIMonto} />
           </div>
-          <div>
-            <label className="input-label">Tipo</label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {['fijo', 'variable'].map(t => (
-                <motion.button key={t} whileTap={{ scale: 0.95 }} onClick={() => setITipo(t)}
-                  style={{
-                    flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                    border: `1px solid ${iTipo === t ? 'rgba(45,212,164,0.4)' : 'var(--border)'}`,
-                    background: iTipo === t ? 'var(--income-dim)' : 'var(--bg-surface-3)',
-                    color: iTipo === t ? 'var(--income)' : 'var(--text-secondary)',
-                    fontFamily: 'Inter, sans-serif', fontWeight: iTipo === t ? 600 : 400, textTransform: 'capitalize',
-                  }}
-                >{t}</motion.button>
-              ))}
-            </div>
-          </div>
+
+          <motion.button whileTap={{ scale: 0.96 }} onClick={handleSaveIngreso}
+            disabled={!iFuente.trim() || !iMonto}
+            style={{ width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none', background: iFuente.trim() && iMonto ? 'var(--income)' : 'var(--bg-surface-3)', color: iFuente.trim() && iMonto ? 'white' : 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px', cursor: 'pointer' }}
+          >
+            {editIngreso ? 'Guardar cambios' : 'Agregar ingreso'}
+          </motion.button>
 
           {editIngreso && (
             <motion.button whileTap={{ scale: 0.96 }} onClick={handleDeleteIngreso}
@@ -567,13 +586,6 @@ export default function Personal() {
               Eliminar ingreso
             </motion.button>
           )}
-
-          <motion.button whileTap={{ scale: 0.96 }} onClick={handleSaveIngreso}
-            disabled={!iNombre.trim() || !iMonto}
-            style={{ width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none', background: iNombre.trim() && iMonto ? 'var(--income)' : 'var(--bg-surface-3)', color: iNombre.trim() && iMonto ? 'white' : 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px', cursor: 'pointer' }}
-          >
-            {editIngreso ? 'Guardar cambios' : 'Agregar ingreso'}
-          </motion.button>
         </div>
       </Sheet>
 
@@ -592,9 +604,9 @@ export default function Personal() {
       <ConfirmDeleteSheet
         open={!!confirmIng}
         onClose={() => setConfirmIng(null)}
-        itemName={confirmIng?.nombre}
+        itemName={confirmIng?.fuente}
         onConfirm={() => {
-          dispatch({ type: ACTIONS.DELETE_INGRESO, id: confirmIng.id })
+          dispatch({ type: ACTIONS.DELETE_INGRESO_MES, id: confirmIng.id, mes: mesActual, anio: anioActual })
           haptic.light()
           showToast({ message: 'Ingreso eliminado', type: 'error' })
           setConfirmIng(null)

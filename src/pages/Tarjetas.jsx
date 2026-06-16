@@ -8,7 +8,6 @@ import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import Sheet from '../components/ui/Sheet'
 import AmountInput from '../components/ui/AmountInput'
-import FAB from '../components/ui/FAB'
 import Toast from '../components/ui/Toast'
 import { useToast } from '../hooks/useToast'
 import { useHaptic } from '../hooks/useHaptic'
@@ -411,18 +410,22 @@ export default function Tarjetas() {
           }}>
             <p style={{ fontSize: '40px', marginBottom: '12px' }}>💳</p>
             <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>No tienes tarjetas registradas</p>
-            <motion.button whileTap={{ scale: 0.95 }} onClick={openAdd}
-              style={{
-                marginTop: '16px', padding: '12px 24px', borderRadius: 'var(--radius-md)',
-                border: 'none', background: 'var(--accent)', color: 'white',
-                fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, cursor: 'pointer',
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-              }}
-            >
-              <Plus size={16} /> Agregar tarjeta
-            </motion.button>
           </div>
         )}
+
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={openAdd}
+          style={{
+            width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
+            border: '1px dashed rgba(124,111,247,0.35)', background: 'rgba(124,111,247,0.06)',
+            color: 'var(--accent)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', gap: '8px',
+          }}
+        >
+          <Plus size={15} /> Agregar tarjeta
+        </motion.button>
 
       </div>
 
@@ -434,7 +437,6 @@ export default function Tarjetas() {
         onDelete={handleDelete}
       />
 
-      <FAB onClick={openAdd} color="var(--accent)" />
       <Toast toast={toast} />
     </PageLayout>
   )
