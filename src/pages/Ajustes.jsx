@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronRight, Download, Upload, RefreshCw } from 'lucide-react'
+import { ChevronRight, Download, Upload, RefreshCw, ShieldCheck, LogOut } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
+import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'
 import { seedData } from '../utils/seedData'
 import PageLayout from '../components/layout/PageLayout'
@@ -14,12 +16,8 @@ const Row = ({ label, value, icon: Icon, onClick, color }) => (
     whileTap={{ backgroundColor: 'var(--bg-surface-2)' }}
     onClick={onClick}
     style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '16px',
-      cursor: onClick ? 'pointer' : 'default',
-      minHeight: '54px',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '16px', cursor: onClick ? 'pointer' : 'default', minHeight: '54px',
     }}
   >
     <span style={{ fontSize: '15px', color: color || 'var(--text-primary)' }}>{label}</span>
@@ -33,11 +31,8 @@ const Row = ({ label, value, icon: Icon, onClick, color }) => (
 
 const SectionCard = ({ children }) => (
   <div style={{
-    background: 'var(--bg-surface)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-lg)',
-    overflow: 'hidden',
-    marginBottom: '20px',
+    background: 'var(--bg-surface)', border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: '20px',
   }}>
     {children}
   </div>
@@ -46,11 +41,12 @@ const SectionCard = ({ children }) => (
 const Divider = () => <div style={{ height: '1px', background: 'var(--border)', margin: '0 16px' }} />
 
 export default function Ajustes() {
+  const navigate = useNavigate()
   const { state, dispatch } = useFinance()
+  const { activeProfile, signOut } = useAuth()
   const { toast, showToast } = useToast()
-  const [nombre, setNombre] = useState(state.config.nombre)
+  const [nombre, setNombre]       = useState(state.config.nombre)
   const [metaAhorro, setMetaAhorro] = useState(Math.round(state.personal.metaAhorro * 100))
-  const [editNombre, setEditNombre] = useState(false)
 
   const handleExport = () => {
     const data = JSON.stringify(state, null, 2)
@@ -110,13 +106,17 @@ export default function Ajustes() {
 
   const saveNombre = () => {
     dispatch({ type: ACTIONS.SET_CONFIG, payload: { nombre } })
-    setEditNombre(false)
     showToast({ message: 'Nombre guardado ✓' })
   }
 
   const saveMetaAhorro = (val) => {
     setMetaAhorro(val)
     dispatch({ type: ACTIONS.SET_META_AHORRO, valor: val / 100 })
+  }
+
+  const handleSignOut = async () => {
+    if (!window.confirm('¿Cerrar sesión?')) return
+    await signOut()
   }
 
   return (
@@ -126,8 +126,17 @@ export default function Ajustes() {
         {/* Cuenta */}
         <p className="label-uppercase" style={{ marginBottom: '8px' }}>Cuenta</p>
         <SectionCard>
+          {activeProfile?.email && (
+            <>
+              <div style={{ padding: '14px 16px' }}>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '2px' }}>Email</p>
+                <p style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{activeProfile.email}</p>
+              </div>
+              <Divider />
+            </>
+          )}
           <div style={{ padding: '16px' }}>
-            <label className="input-label">Nombre</label>
+            <label className="input-label">Nombre en la app</label>
             <input
               className="input-field"
               value={nombre}
@@ -138,6 +147,23 @@ export default function Ajustes() {
           </div>
           <Divider />
           <Row label="Moneda" value="COP" />
+        </SectionCard>
+
+        {/* Seguridad */}
+        <p className="label-uppercase" style={{ marginBottom: '8px' }}>Seguridad</p>
+        <SectionCard>
+          <Row
+            label="Verificación en dos pasos (2FA)"
+            icon={ShieldCheck}
+            onClick={() => navigate('/ajustes/2fa')}
+          />
+          <Divider />
+          <Row
+            label="Cerrar sesión"
+            icon={LogOut}
+            onClick={handleSignOut}
+            color="var(--expense)"
+          />
         </SectionCard>
 
         {/* Presupuesto */}
@@ -151,10 +177,7 @@ export default function Ajustes() {
               </span>
             </div>
             <input
-              type="range"
-              min={0}
-              max={50}
-              step={5}
+              type="range" min={0} max={50} step={5}
               value={metaAhorro}
               onChange={e => saveMetaAhorro(Number(e.target.value))}
               style={{ width: '100%', accentColor: 'var(--accent)' }}
@@ -174,7 +197,7 @@ export default function Ajustes() {
 
         {/* Info */}
         <SectionCard>
-          <Row label="Versión" value="1.0.0" />
+          <Row label="Versión" value="2.0.0" />
           <Divider />
           <div style={{ padding: '12px 16px', textAlign: 'center' }}>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>

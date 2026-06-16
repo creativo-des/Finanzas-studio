@@ -1,77 +1,155 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-
-const PROFILES_KEY = 'df-profiles-v1'
-const uid = () => Math.random().toString(36).slice(2, 9)
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
-export function AuthProvider({ children }) {
-  const [profiles, setProfiles]         = useState([])
-  const [activeProfile, setActiveProfile] = useState(null)
-  const [mode, setMode]                 = useState(null) // 'personal' | 'estudio' | null
-  const [ready, setReady]               = useState(false)
+const modeKey = (uid) => `df-mode-${uid}`
 
-  // Cargar perfiles al arrancar
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(PROFILES_KEY)
-      const parsed = raw ? JSON.parse(raw) : { profiles: [] }
-      setProfiles(parsed.profiles || [])
-    } catch {
-      setProfiles([])
-    }
-    setReady(true)
+export function AuthProvider({ children }) {
+  const [user, setUser]             = useState(null)
+  const [mfaPending, setMfaPending] = useState(false)
+  const [mode, setMode]             = useState(null)
+  const [ready, setReady]           = useState(false)
+
+  const loadMode = useCallback((uid) => {
+    setMode(localStorage.getItem(modeKey(uid)) || null)
   }, [])
 
-  const persistProfiles = (ps) => {
-    setProfiles(ps)
-    localStorage.setItem(PROFILES_KEY, JSON.stringify({ profiles: ps }))
-  }
-
-  const createProfile = ({ nombre, emoji, pin }) => {
-    const p = {
-      id: uid(),
-      nombre: nombre.trim(),
-      emoji,
-      pin: pin || null,
-      createdAt: new Date().toISOString(),
+  const checkMFA = useCallback(async () => {
+    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    if (data?.nextLevel === 'aal2' && data?.currentLevel !== 'aal2') {
+      setMfaPending(true)
+      return true
     }
-    persistProfiles([...profiles, p])
-    return p
+    setMfaPending(false)
+    return false
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user)
+        const needsMFA = await checkMFA()
+        if (!needsMFA) loadMode(session.user.id)
+      }
+      setReady(true)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+        const needsMFA = await checkMFA()
+        if (!needsMFA) loadMode(session.user.id)
+      } else {
+        setUser(null)
+        setMfaPending(false)
+        setMode(null)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [checkMFA, loadMode])
+
+  const signUp = async ({ email, password, nombre, emoji }) => {
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { data: { nombre: nombre.trim(), emoji: emoji || '🧑' } },
+    })
+    if (error) throw error
+    return data
   }
 
-  const updateProfile = (id, changes) => {
-    persistProfiles(profiles.map(p => p.id === id ? { ...p, ...changes } : p))
+  const signIn = async ({ email, password }) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    })
+    if (error) throw error
+    return data
   }
 
-  const deleteProfile = (id) => {
-    persistProfiles(profiles.filter(p => p.id !== id))
-    localStorage.removeItem(`df-data-${id}`)
-  }
-
-  const login = (profile) => {
-    setActiveProfile(profile)
-    setMode(null) // siempre forzar selección de modo al hacer login
-  }
-
-  const logout = () => {
-    setActiveProfile(null)
+  const signOut = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
     setMode(null)
+    setMfaPending(false)
   }
 
-  const switchMode = (m) => setMode(m)
+  const completeMFA = async (code) => {
+    const { data: { totp } } = await supabase.auth.mfa.listFactors()
+    if (!totp?.length) throw new Error('No hay factor 2FA configurado')
+    const factorId = totp[0].id
+    const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId })
+    if (cErr) throw cErr
+    const { error: vErr } = await supabase.auth.mfa.verify({
+      factorId,
+      challengeId: challenge.id,
+      code: code.trim(),
+    })
+    if (vErr) throw vErr
+    setMfaPending(false)
+    if (user) loadMode(user.id)
+  }
+
+  const enrollMFA = async () => {
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' })
+    if (error) throw error
+    return data
+  }
+
+  const confirmMFAEnroll = async (factorId, code) => {
+    const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId })
+    if (cErr) throw cErr
+    const { error: vErr } = await supabase.auth.mfa.verify({
+      factorId,
+      challengeId: challenge.id,
+      code: code.trim(),
+    })
+    if (vErr) throw vErr
+  }
+
+  const unenrollMFA = async () => {
+    const { data: { totp } } = await supabase.auth.mfa.listFactors()
+    if (totp?.length) {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: totp[0].id })
+      if (error) throw error
+    }
+  }
+
+  const hasMFA = async () => {
+    const { data: { totp } } = await supabase.auth.mfa.listFactors()
+    return (totp?.length ?? 0) > 0
+  }
+
+  const switchMode = (m) => {
+    setMode(m)
+    if (user) localStorage.setItem(modeKey(user.id), m)
+  }
+
+  const activeProfile = user
+    ? {
+        id: user.id,
+        nombre: user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario',
+        emoji: user.user_metadata?.emoji || '🧑',
+        email: user.email,
+      }
+    : null
 
   return (
     <AuthContext.Provider value={{
-      profiles,
+      user,
       activeProfile,
+      mfaPending,
       mode,
       ready,
-      createProfile,
-      updateProfile,
-      deleteProfile,
-      login,
-      logout,
+      signUp,
+      signIn,
+      signOut,
+      completeMFA,
+      enrollMFA,
+      confirmMFAEnroll,
+      unenrollMFA,
+      hasMFA,
       switchMode,
     }}>
       {children}
