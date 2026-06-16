@@ -30,7 +30,7 @@ export default function TabBar() {
       transform: 'translateX(-50%)',
       width: '100%',
       maxWidth: '430px',
-      height: 'calc(80px + env(safe-area-inset-bottom))',
+      height: 'calc(60px + env(safe-area-inset-bottom))',
       paddingBottom: 'env(safe-area-inset-bottom)',
       background: 'var(--glass-bg)',
       backdropFilter: 'var(--glass-blur)',
@@ -38,7 +38,7 @@ export default function TabBar() {
       borderTop: '1px solid var(--border)',
       display: 'flex',
       alignItems: 'flex-start',
-      paddingTop: '12px',
+      paddingTop: '8px',
       zIndex: 90,
     }}>
       {tabs.map(({ to, icon: Icon, label }) => {
@@ -65,18 +65,18 @@ export default function TabBar() {
               whileTap={{ scale: 0.88 }}
               transition={{ duration: 0.1 }}
               style={{
-                width: '44px',
-                height: '28px',
+                width: '40px',
+                height: '22px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: '14px',
+                borderRadius: '11px',
                 background: isActive ? 'var(--accent-dim)' : 'transparent',
                 transition: 'background 0.2s',
               }}
             >
               <Icon
-                size={20}
+                size={18}
                 color={isActive ? 'var(--accent)' : 'var(--text-muted)'}
                 strokeWidth={isActive ? 2.2 : 1.8}
               />

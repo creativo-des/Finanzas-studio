@@ -1,11 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronRight, Download, Upload, RefreshCw, ShieldCheck, LogOut } from 'lucide-react'
+import { ChevronRight, Download, Upload, RefreshCw, ShieldCheck, LogOut, Camera } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'
-import { seedData } from '../utils/seedData'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import Toast from '../components/ui/Toast'
@@ -43,10 +42,37 @@ const Divider = () => <div style={{ height: '1px', background: 'var(--border)', 
 export default function Ajustes() {
   const navigate = useNavigate()
   const { state, dispatch } = useFinance()
-  const { activeProfile, signOut } = useAuth()
+  const { activeProfile, signOut, updateAvatar } = useAuth()
   const { toast, showToast } = useToast()
-  const [nombre, setNombre]       = useState(state.config.nombre)
-  const [metaAhorro, setMetaAhorro] = useState(Math.round(state.personal.metaAhorro * 100))
+  const [nombre, setNombre]           = useState(state.config.nombre)
+  const [metaAhorro, setMetaAhorro]   = useState(Math.round(state.personal.metaAhorro * 100))
+  const [avatarLoading, setAvatarLoading] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const handleAvatarClick = () => fileInputRef.current?.click()
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      showToast({ message: 'Solo se permiten imágenes', type: 'error' })
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast({ message: 'La imagen no puede superar 5 MB', type: 'error' })
+      return
+    }
+    setAvatarLoading(true)
+    try {
+      await updateAvatar(file)
+      showToast({ message: 'Foto actualizada ✓' })
+    } catch (err) {
+      showToast({ message: 'Error al subir la foto', type: 'error' })
+    } finally {
+      setAvatarLoading(false)
+      e.target.value = ''
+    }
+  }
 
   const handleExport = () => {
     const data = JSON.stringify(state, null, 2)
@@ -126,15 +152,62 @@ export default function Ajustes() {
         {/* Cuenta */}
         <p className="label-uppercase" style={{ marginBottom: '8px' }}>Cuenta</p>
         <SectionCard>
-          {activeProfile?.email && (
-            <>
-              <div style={{ padding: '14px 16px' }}>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '2px' }}>Email</p>
-                <p style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{activeProfile.email}</p>
+
+          {/* Avatar */}
+          <div style={{ padding: '20px 16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleAvatarChange}
+            />
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={handleAvatarClick}
+              disabled={avatarLoading}
+              style={{
+                position: 'relative', flexShrink: 0,
+                width: '64px', height: '64px', borderRadius: '50%',
+                background: 'var(--accent-dim)',
+                border: '2px solid var(--accent-border)',
+                overflow: 'hidden', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {activeProfile?.avatar_url ? (
+                <img
+                  src={activeProfile.avatar_url}
+                  alt="Avatar"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <span style={{ fontSize: '30px' }}>{activeProfile?.emoji || '🧑'}</span>
+              )}
+              <div style={{
+                position: 'absolute', bottom: 0, left: 0, right: 0,
+                height: '28px',
+                background: 'rgba(0,0,0,0.55)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {avatarLoading
+                  ? <span style={{ fontSize: '10px', color: 'white' }}>...</span>
+                  : <Camera size={13} color="white" />
+                }
               </div>
-              <Divider />
-            </>
-          )}
+            </motion.button>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px', color: 'var(--text-primary)', marginBottom: '2px' }}>
+                {activeProfile?.nombre}
+              </p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{activeProfile?.email}</p>
+              <p style={{ fontSize: '11px', color: 'var(--accent)', marginTop: '4px', cursor: 'pointer' }} onClick={handleAvatarClick}>
+                Cambiar foto
+              </p>
+            </div>
+          </div>
+          <Divider />
+
           <div style={{ padding: '16px' }}>
             <label className="input-label">Nombre en la app</label>
             <input

@@ -121,6 +121,24 @@ export function AuthProvider({ children }) {
     return (totp?.length ?? 0) > 0
   }
 
+  const updateAvatar = async (file) => {
+    if (!user) throw new Error('No hay sesión')
+    const ext  = file.name.split('.').pop()
+    const path = `${user.id}/avatar.${ext}`
+    const { error: upErr } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true, contentType: file.type })
+    if (upErr) throw upErr
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+    const avatarUrl = `${data.publicUrl}?t=${Date.now()}`
+    const { data: updated, error: uErr } = await supabase.auth.updateUser({
+      data: { ...user.user_metadata, avatar_url: avatarUrl },
+    })
+    if (uErr) throw uErr
+    setUser(updated.user)
+    return avatarUrl
+  }
+
   const switchMode = (m) => {
     setMode(m)
     if (user) localStorage.setItem(modeKey(user.id), m)
@@ -132,6 +150,7 @@ export function AuthProvider({ children }) {
         nombre: user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario',
         emoji: user.user_metadata?.emoji || '🧑',
         email: user.email,
+        avatar_url: user.user_metadata?.avatar_url || null,
       }
     : null
 
@@ -150,6 +169,7 @@ export function AuthProvider({ children }) {
       confirmMFAEnroll,
       unenrollMFA,
       hasMFA,
+      updateAvatar,
       switchMode,
     }}>
       {children}

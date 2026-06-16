@@ -26,7 +26,7 @@ const MODES = [
 const spring = { type: 'spring', stiffness: 300, damping: 24 }
 
 export default function ModeSelector() {
-  const { activeProfile, switchMode, logout } = useAuth()
+  const { activeProfile, switchMode, signOut } = useAuth()
 
   return (
     <div style={{
@@ -47,8 +47,11 @@ export default function ModeSelector() {
         transition={spring}
         style={{ textAlign: 'center' }}
       >
-        <div style={{ fontSize: '48px', marginBottom: '8px' }}>
-          {activeProfile?.emoji}
+        <div style={{ width: '72px', height: '72px', borderRadius: '50%', margin: '0 auto 8px', background: 'var(--accent-dim)', border: '2px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', overflow: 'hidden', flexShrink: 0 }}>
+          {activeProfile?.avatar_url
+            ? <img src={activeProfile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : activeProfile?.emoji
+          }
         </div>
         <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '22px', color: 'var(--text-primary)', marginBottom: '4px' }}>
           Hola, {activeProfile?.nombre}
@@ -124,7 +127,7 @@ export default function ModeSelector() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
         whileTap={{ scale: 0.96 }}
-        onClick={logout}
+        onClick={signOut}
         style={{
           display: 'flex', alignItems: 'center', gap: '6px',
           background: 'transparent', border: 'none',
