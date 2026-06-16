@@ -4,17 +4,17 @@ import { Home, User, Building2, CreditCard, MoreHorizontal } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const PERSONAL_TABS = [
-  { to: '/',          icon: Home,           label: 'Home'     },
-  { to: '/personal',  icon: User,           label: 'Personal' },
-  { to: '/tarjetas',  icon: CreditCard,     label: 'Tarjetas' },
-  { to: '/mas',       icon: MoreHorizontal, label: 'Más'      },
+  { to: '/',         icon: Home,           },
+  { to: '/personal', icon: User,           },
+  { to: '/tarjetas', icon: CreditCard,     },
+  { to: '/mas',      icon: MoreHorizontal, },
 ]
 
 const ESTUDIO_TABS = [
-  { to: '/',          icon: Home,           label: 'Home'    },
-  { to: '/estudio',   icon: Building2,      label: 'Estudio' },
-  { to: '/tarjetas',  icon: CreditCard,     label: 'Tarjetas'},
-  { to: '/mas',       icon: MoreHorizontal, label: 'Más'     },
+  { to: '/',         icon: Home,           },
+  { to: '/estudio',  icon: Building2,      },
+  { to: '/tarjetas', icon: CreditCard,     },
+  { to: '/mas',      icon: MoreHorizontal, },
 ]
 
 export default function TabBar() {
@@ -25,70 +25,48 @@ export default function TabBar() {
   return (
     <nav style={{
       position: 'fixed',
-      bottom: 0,
+      bottom: 'calc(20px + env(safe-area-inset-bottom))',
       left: '50%',
       transform: 'translateX(-50%)',
-      width: '100%',
-      maxWidth: '430px',
-      height: 'calc(60px + env(safe-area-inset-bottom))',
-      paddingBottom: 'env(safe-area-inset-bottom)',
-      background: 'var(--glass-bg)',
-      backdropFilter: 'var(--glass-blur)',
-      WebkitBackdropFilter: 'var(--glass-blur)',
-      borderTop: '1px solid var(--border)',
+      background: 'rgba(10, 10, 20, 0.92)',
+      backdropFilter: 'blur(28px)',
+      WebkitBackdropFilter: 'blur(28px)',
+      borderRadius: '100px',
+      border: '1px solid rgba(255,255,255,0.10)',
+      boxShadow: '0 12px 40px rgba(0,0,0,0.55), 0 2px 10px rgba(0,0,0,0.35)',
       display: 'flex',
-      alignItems: 'flex-start',
-      paddingTop: '8px',
+      alignItems: 'center',
+      padding: '6px',
+      gap: '2px',
       zIndex: 90,
     }}>
-      {tabs.map(({ to, icon: Icon, label }) => {
+      {tabs.map(({ to, icon: Icon }) => {
         const isActive = to === '/'
           ? location.pathname === '/'
           : location.pathname.startsWith(to)
 
         return (
-          <NavLink
-            key={to}
-            to={to}
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px',
-              padding: '8px 4px',
-              cursor: 'pointer',
-              textDecoration: 'none',
-            }}
-          >
+          <NavLink key={to} to={to} style={{ textDecoration: 'none' }}>
             <motion.div
-              whileTap={{ scale: 0.88 }}
+              whileTap={{ scale: 0.82 }}
               transition={{ duration: 0.1 }}
               style={{
-                width: '40px',
-                height: '22px',
+                width: '58px',
+                height: '44px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: '11px',
-                background: isActive ? 'var(--accent-dim)' : 'transparent',
+                borderRadius: '100px',
+                background: isActive ? 'rgba(124,111,247,0.22)' : 'transparent',
                 transition: 'background 0.2s',
               }}
             >
               <Icon
-                size={18}
-                color={isActive ? 'var(--accent)' : 'var(--text-muted)'}
-                strokeWidth={isActive ? 2.2 : 1.8}
+                size={22}
+                color={isActive ? 'var(--accent)' : 'rgba(255,255,255,0.42)'}
+                strokeWidth={isActive ? 2.2 : 1.6}
               />
             </motion.div>
-            <span style={{
-              fontSize: '10px',
-              color: isActive ? 'var(--accent)' : 'var(--text-muted)',
-              fontWeight: isActive ? 600 : 500,
-              fontFamily: 'Inter, sans-serif',
-            }}>
-              {label}
-            </span>
           </NavLink>
         )
       })}

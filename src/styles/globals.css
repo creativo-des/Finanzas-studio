@@ -122,7 +122,8 @@ html, body, #root {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  padding-bottom: calc(60px + 20px + env(safe-area-inset-bottom));
+  /* nav flotante: 44px alto + 6px padding*2 + 20px offset + 20px espacio extra */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
 .page-scroll::-webkit-scrollbar { display: none; }
@@ -260,6 +261,12 @@ select.input-field { cursor: pointer; }
 
 /* ── Padding horizontal estándar ──────────────────────── */
 .px-main { padding-left: 20px; padding-right: 20px; }
+
+/* ── Animación spinner ─────────────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 
 /* ── Tema Estudio: azul en lugar de morado ────────────── */
 [data-mode="estudio"] {

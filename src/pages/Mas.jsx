@@ -1,45 +1,27 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Target, TrendingUp, Settings, ChevronRight, DollarSign,
-  LogOut, Copy, CheckCircle, AlertCircle, RefreshCw, Download, CreditCard,
+  LogOut, Copy, CheckCircle, AlertCircle, RefreshCw, Download, CreditCard, Loader,
 } from 'lucide-react'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import { useAuth } from '../context/AuthContext'
 import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
+import { supabase } from '../lib/supabase'
 
 // ── Constantes ──────────────────────────────────────────────────────
-const SYNC_PREFIX  = 'df-sync-'
 const LAST_SYNC_KEY = 'df-last-sync'
-const CODE_TTL_MS  = 48 * 3600 * 1000  // 48 horas
-// Letras sin ambigüedad (sin 0/O, sin 1/I/L)
-const CODE_CHARS   = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+const CODE_TTL_MS   = 48 * 3600 * 1000  // 48 horas
+const CODE_CHARS    = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 
 // ── Helpers ─────────────────────────────────────────────────────────
 function generateCode() {
   return Array.from({ length: 8 }, () =>
     CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]
   ).join('')
-}
-
-function saveCodeData(code, data) {
-  localStorage.setItem(SYNC_PREFIX + code, JSON.stringify({ data, ts: Date.now() }))
-}
-
-function loadCodeData(code) {
-  try {
-    const raw = localStorage.getItem(SYNC_PREFIX + code.toUpperCase().replace(/\s/g, ''))
-    if (!raw) return null
-    const { data, ts } = JSON.parse(raw)
-    if (Date.now() - ts > CODE_TTL_MS) {
-      localStorage.removeItem(SYNC_PREFIX + code)
-      return null
-    }
-    return data
-  } catch { return null }
 }
 
 function tiempoDesde(isoString) {
@@ -54,37 +36,30 @@ function tiempoDesde(isoString) {
 }
 
 function formatCode(code) {
-  // Muestra como "ABCD EFGH"
   return code ? `${code.slice(0, 4)} ${code.slice(4)}` : ''
 }
 
-// ── Sección de sincronización ────────────────────────────────────────
+// ── Sección de sincronización (Supabase) ────────────────────────────
 function SyncSection({ estudio, dispatch }) {
   const [miCodigo, setMiCodigo]         = useState(() => localStorage.getItem('df-my-sync-code') || '')
   const [codigoInput, setCodigoInput]   = useState('')
   const [copied, setCopied]             = useState(false)
-  const [importStatus, setImportStatus] = useState(null) // 'ok' | 'error' | 'expired'
+  const [importStatus, setImportStatus] = useState(null) // 'ok' | 'error' | 'expired' | 'netError'
   const [lastSync, setLastSync]         = useState(() => localStorage.getItem(LAST_SYNC_KEY))
+  const [generating, setGenerating]     = useState(false)
+  const [importing, setImporting]       = useState(false)
 
-  // Limpiar el código activo si ya expiró
-  useEffect(() => {
-    if (miCodigo) {
-      const raw = localStorage.getItem(SYNC_PREFIX + miCodigo)
-      if (!raw) { setMiCodigo(''); localStorage.removeItem('df-my-sync-code') }
-      else {
-        try {
-          const { ts } = JSON.parse(raw)
-          if (Date.now() - ts > CODE_TTL_MS) {
-            setMiCodigo(''); localStorage.removeItem('df-my-sync-code')
-          }
-        } catch { setMiCodigo(''); localStorage.removeItem('df-my-sync-code') }
-      }
-    }
-  }, [])
-
-  const handleGenerar = () => {
+  const handleGenerar = async () => {
+    setGenerating(true)
     const code = generateCode()
-    saveCodeData(code, estudio)
+    const { error } = await supabase
+      .from('sync_codes')
+      .upsert({ code, data: estudio, created_at: new Date().toISOString() })
+    setGenerating(false)
+    if (error) {
+      console.error('[Sync] Error guardando código:', error)
+      return
+    }
     setMiCodigo(code)
     localStorage.setItem('df-my-sync-code', code)
     setCopied(false)
@@ -96,15 +71,25 @@ function SyncSection({ estudio, dispatch }) {
     setTimeout(() => setCopied(false), 2500)
   }
 
-  const handleImport = () => {
+  const handleImport = async () => {
     const clean = codigoInput.toUpperCase().replace(/\s/g, '')
     if (clean.length !== 8) { setImportStatus('error'); return }
-    const data = loadCodeData(clean)
-    if (!data) {
-      setImportStatus(clean.length === 8 ? 'expired' : 'error')
+    setImporting(true)
+    const { data, error } = await supabase
+      .from('sync_codes')
+      .select('data, created_at')
+      .eq('code', clean)
+      .single()
+    setImporting(false)
+    if (error) {
+      setImportStatus(error.code === 'PGRST116' ? 'expired' : 'netError')
       return
     }
-    dispatch({ type: ACTIONS.IMPORT_ESTUDIO, estudio: data })
+    if (!data || Date.now() - new Date(data.created_at).getTime() > CODE_TTL_MS) {
+      setImportStatus('expired')
+      return
+    }
+    dispatch({ type: ACTIONS.IMPORT_ESTUDIO, estudio: data.data })
     const now = new Date().toISOString()
     localStorage.setItem(LAST_SYNC_KEY, now)
     setLastSync(now)
@@ -123,7 +108,7 @@ function SyncSection({ estudio, dispatch }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-      {/* Título sección */}
+      {/* Título */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <RefreshCw size={13} color="#4F9EF8" />
         <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -135,15 +120,11 @@ function SyncSection({ estudio, dispatch }) {
       <AnimatePresence>
         {(synced || lastSync) && (
           <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 14px',
-              borderRadius: 'var(--radius-md)',
-              background: 'rgba(45,212,164,0.1)',
-              border: '1px solid rgba(45,212,164,0.25)',
+              padding: '10px 14px', borderRadius: 'var(--radius-md)',
+              background: 'rgba(45,212,164,0.1)', border: '1px solid rgba(45,212,164,0.25)',
             }}
           >
             <CheckCircle size={14} color="#2DD4A4" />
@@ -156,95 +137,79 @@ function SyncSection({ estudio, dispatch }) {
 
       {/* ── BLOQUE: Mi código ── */}
       <div style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '16px',
+        background: 'var(--bg-surface)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)', padding: '16px',
         display: 'flex', flexDirection: 'column', gap: '12px',
       }}>
         <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-          Genera un código y compártelo con tu socia para sincronizar los datos del Estudio.
+          Genera un código y compártelo con tu socia para sincronizar los datos del Estudio desde cualquier dispositivo.
         </p>
 
         {miCodigo ? (
           <>
-            {/* Código grande */}
             <div style={{
-              background: 'var(--bg-surface-2)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-md)',
-              padding: '18px 16px',
-              textAlign: 'center',
+              background: 'var(--bg-surface-2)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-md)', padding: '18px 16px', textAlign: 'center',
             }}>
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Tu código
               </p>
               <p style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '32px',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                letterSpacing: '0.18em',
+                fontFamily: 'JetBrains Mono, monospace', fontSize: '32px', fontWeight: 700,
+                color: 'var(--text-primary)', letterSpacing: '0.18em',
               }}>
                 {formatCode(miCodigo)}
               </p>
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
-                Válido 48 h · Solo en este dispositivo
+                Válido 48 h · Guardado en la nube ☁️
               </p>
             </div>
 
             <div style={{ display: 'flex', gap: '8px' }}>
               <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={handleCopy}
+                whileTap={{ scale: 0.96 }} onClick={handleCopy}
                 style={{
-                  flex: 1, padding: '11px',
-                  borderRadius: 'var(--radius-md)',
-                  border: 'none',
+                  flex: 1, padding: '11px', borderRadius: 'var(--radius-md)', border: 'none',
                   background: copied ? 'rgba(45,212,164,0.15)' : '#4F9EF8',
                   color: copied ? '#2DD4A4' : 'white',
                   fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '14px',
-                  cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                   transition: 'background 0.2s, color 0.2s',
                 }}
               >
                 {copied ? <><CheckCircle size={14} /> Copiado</> : <><Copy size={14} /> Copiar código</>}
               </motion.button>
               <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={handleGenerar}
+                whileTap={{ scale: 0.96 }} onClick={handleGenerar} disabled={generating}
                 title="Generar nuevo código"
                 style={{
-                  padding: '11px 14px',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-surface-2)',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
+                  padding: '11px 14px', borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border)', background: 'var(--bg-surface-2)',
+                  color: 'var(--text-muted)', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                <RefreshCw size={16} />
+                {generating
+                  ? <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  : <RefreshCw size={16} />
+                }
               </motion.button>
             </div>
           </>
         ) : (
           <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={handleGenerar}
+            whileTap={{ scale: 0.97 }} onClick={handleGenerar} disabled={generating}
             style={{
-              width: '100%', padding: '14px',
-              borderRadius: 'var(--radius-md)',
-              border: 'none',
-              background: '#4F9EF8',
-              color: 'white',
+              width: '100%', padding: '14px', borderRadius: 'var(--radius-md)', border: 'none',
+              background: '#4F9EF8', color: 'white',
               fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '15px',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             }}
           >
-            <Download size={16} /> Generar mi código
+            {generating
+              ? <><Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> Guardando...</>
+              : <><Download size={16} /> Generar mi código</>
+            }
           </motion.button>
         )}
       </div>
@@ -252,78 +217,73 @@ function SyncSection({ estudio, dispatch }) {
       {/* ── BLOQUE: Importar código ── */}
       <div style={{
         background: 'var(--bg-surface)',
-        border: importStatus === 'error' || importStatus === 'expired'
+        border: importStatus === 'error' || importStatus === 'expired' || importStatus === 'netError'
           ? '1px solid rgba(239,68,68,0.35)'
           : '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '16px',
+        borderRadius: 'var(--radius-lg)', padding: '16px',
         display: 'flex', flexDirection: 'column', gap: '12px',
         transition: 'border-color 0.2s',
       }}>
         <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-          Ingresa el código de tu socia para importar sus datos:
+          Ingresa el código de tu socia para importar sus datos desde cualquier dispositivo:
         </p>
 
-        {/* Input de código */}
         <input
           value={formatCode(codigoInput)}
           onChange={handleInputChange}
-          placeholder="AB CD  EF GH"
+          placeholder="ABCD EFGH"
           maxLength={9}
           style={{
-            padding: '14px 16px',
-            borderRadius: 'var(--radius-md)',
+            padding: '14px 16px', borderRadius: 'var(--radius-md)',
             border: `1px solid ${importStatus === 'error' || importStatus === 'expired' ? 'rgba(239,68,68,0.4)' : 'var(--border)'}`,
-            background: 'var(--bg-surface-2)',
-            color: 'var(--text-primary)',
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '26px',
-            fontWeight: 700,
-            letterSpacing: '0.18em',
-            textAlign: 'center',
-            outline: 'none',
-            width: '100%',
-            boxSizing: 'border-box',
-            textTransform: 'uppercase',
+            background: 'var(--bg-surface-2)', color: 'var(--text-primary)',
+            fontFamily: 'JetBrains Mono, monospace', fontSize: '26px', fontWeight: 700,
+            letterSpacing: '0.18em', textAlign: 'center', outline: 'none',
+            width: '100%', boxSizing: 'border-box', textTransform: 'uppercase',
             transition: 'border-color 0.2s',
           }}
         />
 
-        {/* Mensajes de estado */}
         <AnimatePresence mode="wait">
           {importStatus === 'error' && (
             <motion.div key="err" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <AlertCircle size={13} color="#EF4444" />
               <p style={{ fontSize: '12px', color: '#EF4444' }}>Código inválido. Debe tener 8 caracteres.</p>
             </motion.div>
           )}
           {importStatus === 'expired' && (
             <motion.div key="exp" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <AlertCircle size={13} color="#F5B731" />
               <p style={{ fontSize: '12px', color: '#F5B731' }}>Código no encontrado o expirado. Pide uno nuevo.</p>
+            </motion.div>
+          )}
+          {importStatus === 'netError' && (
+            <motion.div key="net" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <AlertCircle size={13} color="#EF4444" />
+              <p style={{ fontSize: '12px', color: '#EF4444' }}>Error de conexión. Revisa tu internet.</p>
             </motion.div>
           )}
         </AnimatePresence>
 
         <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={handleImport}
-          disabled={codigoInput.length < 8}
+          whileTap={{ scale: 0.97 }} onClick={handleImport}
+          disabled={codigoInput.length < 8 || importing}
           style={{
-            width: '100%', padding: '13px',
-            borderRadius: 'var(--radius-md)',
-            border: 'none',
-            background: codigoInput.length === 8 ? 'var(--accent)' : 'var(--bg-surface-3)',
-            color: codigoInput.length === 8 ? 'white' : 'var(--text-muted)',
+            width: '100%', padding: '13px', borderRadius: 'var(--radius-md)', border: 'none',
+            background: codigoInput.length === 8 && !importing ? 'var(--accent)' : 'var(--bg-surface-3)',
+            color: codigoInput.length === 8 && !importing ? 'white' : 'var(--text-muted)',
             fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '15px',
-            cursor: codigoInput.length === 8 ? 'pointer' : 'not-allowed',
+            cursor: codigoInput.length === 8 && !importing ? 'pointer' : 'not-allowed',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
           }}
         >
-          Sincronizar
+          {importing
+            ? <><Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> Buscando...</>
+            : 'Sincronizar'
+          }
         </motion.button>
       </div>
 
@@ -343,38 +303,12 @@ const opciones = [
 // ── Página ───────────────────────────────────────────────────────────
 export default function Mas() {
   const navigate = useNavigate()
-  const { logout, activeProfile } = useAuth()
+  const { signOut } = useAuth()
   const { state, dispatch } = useFinance()
 
   return (
     <PageLayout header={<PageHeader title="Más" />}>
       <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-        {/* Perfil activo */}
-        {activeProfile && (
-          <div style={{
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '16px',
-            display: 'flex', alignItems: 'center', gap: '12px',
-          }}>
-            <div style={{
-              width: '48px', height: '48px', borderRadius: '50%',
-              background: 'var(--accent-dim)', border: '2px solid var(--accent-border)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '26px', flexShrink: 0,
-            }}>
-              {activeProfile.emoji}
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px', color: 'var(--text-primary)' }}>
-                {activeProfile.nombre}
-              </p>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Perfil activo</p>
-            </div>
-          </div>
-        )}
 
         {/* Opciones */}
         <div style={{
@@ -420,7 +354,7 @@ export default function Mas() {
         {/* Cerrar sesión */}
         <motion.button
           whileTap={{ scale: 0.98 }}
-          onClick={logout}
+          onClick={signOut}
           style={{
             width: '100%',
             display: 'flex', alignItems: 'center', gap: '12px',
