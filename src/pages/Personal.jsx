@@ -169,18 +169,27 @@ export default function Personal() {
     <PageLayout
       header={<PageHeader subtitle={`${nombreMes(mesActual)} ${anioActual}`} title="Finanzas Personales" />}
     >
-      {/* Sub-nav */}
-      <div className="scroll-x" style={{ padding: '0 20px 16px', gap: '8px' }}>
+      {/* Sub-nav — segmented control, always 4 tabs visible */}
+      <div style={{
+        margin: '0 20px 16px',
+        background: 'var(--bg-surface-2)',
+        borderRadius: 'var(--radius-full)',
+        padding: '3px',
+        display: 'flex',
+        gap: '2px',
+      }}>
         {TABS.map((t, i) => (
           <motion.button
             key={t} whileTap={{ scale: 0.95 }} onClick={() => setTab(i)}
             style={{
-              padding: '8px 18px', borderRadius: 'var(--radius-full)', whiteSpace: 'nowrap',
-              border: `1px solid ${tab === i ? 'var(--accent-border)' : 'var(--border)'}`,
-              background: tab === i ? 'var(--accent-dim)' : 'transparent',
-              color: tab === i ? 'var(--accent)' : 'var(--text-muted)',
-              fontSize: '14px', fontWeight: tab === i ? 600 : 500,
+              flex: 1, padding: '8px 4px', borderRadius: 'var(--radius-full)',
+              border: 'none',
+              background: tab === i ? 'var(--accent)' : 'transparent',
+              color: tab === i ? 'white' : 'var(--text-muted)',
+              fontSize: '12px', fontWeight: tab === i ? 600 : 500,
               cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+              transition: 'background 0.2s, color 0.2s',
+              whiteSpace: 'nowrap',
             }}
           >{t}</motion.button>
         ))}
@@ -226,14 +235,36 @@ export default function Personal() {
       {tab === 2 && (
         <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
+          {/* Alerta déficit presupuesto */}
+          {totales.totalPresupuesto > totales.totalIngresos && totales.totalIngresos > 0 && (
+            <div style={{
+              background: 'rgba(240,107,107,0.10)',
+              border: '1px solid rgba(240,107,107,0.35)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '12px 16px',
+              display: 'flex', alignItems: 'center', gap: '10px',
+            }}>
+              <span style={{ fontSize: '20px', flexShrink: 0 }}>🚨</span>
+              <div>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--expense)', marginBottom: '2px' }}>
+                  Presupuesto supera tus ingresos en {formatCOP(totales.totalPresupuesto - totales.totalIngresos)}
+                </p>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Reduce las categorías o aumenta tus ingresos para cerrar este déficit
+                </p>
+              </div>
+            </div>
+          )}
+
           <div style={{
             background: 'linear-gradient(135deg, var(--bg-surface), rgba(124,111,247,0.06))',
-            border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-lg)',
+            border: `1px solid ${totales.totalPresupuesto > totales.totalIngresos && totales.totalIngresos > 0 ? 'rgba(240,107,107,0.3)' : 'var(--accent-border)'}`,
+            borderRadius: 'var(--radius-lg)',
             padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
             <div>
               <p className="label-uppercase" style={{ marginBottom: '4px' }}>Total presupuestado</p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '22px', color: 'var(--accent)' }}>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '22px', color: totales.totalPresupuesto > totales.totalIngresos && totales.totalIngresos > 0 ? 'var(--expense)' : 'var(--accent)' }}>
                 {formatCOP(totales.totalPresupuesto)}
               </p>
             </div>

@@ -253,40 +253,66 @@ export default function Dashboard() {
           porcentajeUsado={porcentajeReal}
         />
 
-        {/* ── 2. Balance del mes ──────────────────────────── */}
-        <div style={{ padding: '0 20px' }}>
+        {/* ── 2. Resumen financiero (tasa de ahorro + alerta) ── */}
+        <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+          {/* Alerta presupuesto > ingresos */}
+          {totales.totalPresupuesto > totales.totalIngresos && totales.totalIngresos > 0 && (
+            <div style={{
+              background: 'rgba(245,183,49,0.10)',
+              border: '1px solid rgba(245,183,49,0.35)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '12px 16px',
+              display: 'flex', alignItems: 'center', gap: '10px',
+            }}>
+              <span style={{ fontSize: '20px', flexShrink: 0 }}>⚠️</span>
+              <div>
+                <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--warning)', marginBottom: '2px' }}>
+                  Presupuesto excede tus ingresos
+                </p>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Déficit de {formatCOP(totales.totalPresupuesto - totales.totalIngresos)} — revisa tus categorías
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Tasa de ahorro + ejecución presupuesto */}
           <div style={{
             background: 'var(--bg-surface)',
             border: '1px solid var(--border)',
             borderRadius: 'var(--radius-lg)',
             padding: '16px 20px',
           }}>
-            <p className="label-uppercase" style={{ marginBottom: '14px' }}>
-              Balance · {nombreMes(mesActual)}
+            <p className="label-uppercase" style={{ marginBottom: '12px' }}>
+              Resumen · {nombreMes(mesActual)}
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0', marginBottom: '14px' }}>
-              {[
-                { label: 'Ingresos',   value: totales.totalIngresos, color: 'var(--income)' },
-                { label: 'Gastado',    value: totalGastado,          color: 'var(--expense)' },
-                { label: 'Disponible', value: disponibleReal,        color: disponibleReal >= 0 ? 'var(--income)' : 'var(--expense)' },
-              ].map((kpi, i) => (
-                <div key={kpi.label} style={{
-                  textAlign: i === 1 ? 'center' : i === 2 ? 'right' : 'left',
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '14px' }}>
+              <div>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Tasa de ahorro</p>
+                <p style={{
+                  fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '24px',
+                  color: disponibleReal >= 0 ? 'var(--income)' : 'var(--expense)',
+                  fontVariantNumeric: 'tabular-nums',
                 }}>
-                  <p className="label-uppercase" style={{ marginBottom: '4px' }}>{kpi.label}</p>
-                  <p style={{
-                    fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '15px',
-                    color: kpi.color, fontVariantNumeric: 'tabular-nums',
-                  }}>
-                    {formatCOP(kpi.value)}
-                  </p>
-                </div>
-              ))}
+                  {totales.totalIngresos > 0 ? Math.max(0, Math.round((disponibleReal / totales.totalIngresos) * 100)) : 0}%
+                </p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Presupuesto usado</p>
+                <p style={{
+                  fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '24px',
+                  color: totales.totalPresupuesto > 0 && totalGastado > totales.totalPresupuesto ? 'var(--expense)' : 'var(--text-primary)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}>
+                  {totales.totalPresupuesto > 0 ? Math.round((totalGastado / totales.totalPresupuesto) * 100) : 0}%
+                </p>
+              </div>
             </div>
-            <ProgressBar percent={porcentajeReal} size="lg" />
+            <ProgressBar percent={totales.totalPresupuesto > 0 ? Math.min(100, (totalGastado / totales.totalPresupuesto) * 100) : 0} size="lg" />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                {porcentajeReal.toFixed(0)}% de ingresos usado
+                Gastado: {formatCOP(totalGastado)}
               </span>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                 Presupuesto: {formatCOP(totales.totalPresupuesto)}

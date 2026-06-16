@@ -4,17 +4,17 @@ import { Home, User, Building2, CreditCard, MoreHorizontal } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const PERSONAL_TABS = [
-  { to: '/',              icon: Home,           label: 'Home'     },
-  { to: '/personal',      icon: User,           label: 'Personal' },
-  { to: '/suscripciones', icon: CreditCard,     label: 'Subs'     },
-  { to: '/mas',           icon: MoreHorizontal, label: 'Más'      },
+  { to: '/',          icon: Home,           label: 'Home'     },
+  { to: '/personal',  icon: User,           label: 'Personal' },
+  { to: '/tarjetas',  icon: CreditCard,     label: 'Tarjetas' },
+  { to: '/mas',       icon: MoreHorizontal, label: 'Más'      },
 ]
 
 const ESTUDIO_TABS = [
-  { to: '/',              icon: Home,           label: 'Home'    },
-  { to: '/estudio',       icon: Building2,      label: 'Estudio' },
-  { to: '/suscripciones', icon: CreditCard,     label: 'Subs'    },
-  { to: '/mas',           icon: MoreHorizontal, label: 'Más'     },
+  { to: '/',          icon: Home,           label: 'Home'    },
+  { to: '/estudio',   icon: Building2,      label: 'Estudio' },
+  { to: '/tarjetas',  icon: CreditCard,     label: 'Tarjetas'},
+  { to: '/mas',       icon: MoreHorizontal, label: 'Más'     },
 ]
 
 export default function TabBar() {

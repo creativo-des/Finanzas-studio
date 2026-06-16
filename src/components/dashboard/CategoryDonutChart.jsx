@@ -58,10 +58,14 @@ export default function CategoryDonutChart({ categorias, transacciones }) {
         borderRadius: 'var(--radius-lg)',
         padding: '20px',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <p className="label-uppercase">Distribución de gastos</p>
+        <div style={{ marginBottom: '4px' }}>
+          <p className="label-uppercase">
+            {fromTransacciones ? 'Distribución de gastos' : 'Distribución planificada'}
+          </p>
           {!fromTransacciones && (
-            <span className="badge badge-amber" style={{ fontSize: '9px' }}>Presupuesto</span>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+              Sin gastos registrados · mostrando presupuesto
+            </p>
           )}
         </div>
 

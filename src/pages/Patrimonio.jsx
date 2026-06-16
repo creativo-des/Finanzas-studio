@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Pencil } from 'lucide-react'
+import { Pencil, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { calcTotalPatrimonio } from '../utils/calculations'
@@ -23,6 +23,32 @@ export default function Patrimonio() {
   const activos = state.personal.patrimonio.activos
   const deudas  = state.personal.deudas
   const { totalActivos, totalPasivos, patrimoniNeto } = calcTotalPatrimonio(activos, deudas)
+
+  // Tendencia mes a mes
+  const [tendencia, setTendencia] = useState(null)
+
+  useEffect(() => {
+    const now = new Date()
+    const mesKey = `${now.getFullYear()}-${String(now.getMonth()).padStart(2,'0')}`
+    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const prevKey  = `${prevDate.getFullYear()}-${String(prevDate.getMonth()).padStart(2,'0')}`
+
+    try {
+      const raw  = localStorage.getItem('df-patrimonio-hist')
+      const hist = raw ? JSON.parse(raw) : {}
+
+      if (hist[prevKey] !== undefined) {
+        const diff = patrimoniNeto - hist[prevKey]
+        setTendencia({ diferencia: diff, prevValor: hist[prevKey] })
+      }
+
+      if (hist[mesKey] === undefined) {
+        hist[mesKey] = patrimoniNeto
+        const sorted = Object.entries(hist).sort(([a], [b]) => a.localeCompare(b)).slice(-24)
+        localStorage.setItem('df-patrimonio-hist', JSON.stringify(Object.fromEntries(sorted)))
+      }
+    } catch { /* storage full */ }
+  }, [patrimoniNeto])
 
   // Add
   const [addOpen, setAddOpen]   = useState(false)
@@ -84,10 +110,32 @@ export default function Patrimonio() {
           <p className="label-uppercase" style={{ marginBottom: '4px', color: 'var(--warning)' }}>Patrimonio neto</p>
           <p style={{
             fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '36px',
-            color: patrimoniNeto >= 0 ? 'var(--income)' : 'var(--expense)', marginBottom: '12px',
+            color: patrimoniNeto >= 0 ? 'var(--income)' : 'var(--expense)', marginBottom: '8px',
           }}>
             {formatCOP(patrimoniNeto)}
           </p>
+
+          {tendencia ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+              {tendencia.diferencia > 0
+                ? <TrendingUp size={14} color="var(--income)" />
+                : tendencia.diferencia < 0
+                  ? <TrendingDown size={14} color="var(--expense)" />
+                  : <Minus size={14} color="var(--text-muted)" />
+              }
+              <span style={{
+                fontSize: '13px', fontWeight: 500,
+                color: tendencia.diferencia > 0 ? 'var(--income)' : tendencia.diferencia < 0 ? 'var(--expense)' : 'var(--text-muted)',
+              }}>
+                {tendencia.diferencia > 0 ? '+' : ''}{formatCOP(tendencia.diferencia)} vs mes anterior
+              </span>
+            </div>
+          ) : (
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+              Se registrará la variación desde el próximo mes
+            </p>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div>
               <p className="label-uppercase" style={{ marginBottom: '2px' }}>Activos</p>

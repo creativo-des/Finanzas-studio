@@ -274,7 +274,7 @@ export default function Deudas() {
           background: 'var(--bg-surface)', border: '1px solid var(--border)',
           borderRadius: 'var(--radius-lg)', padding: '16px',
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
             <div>
               <label className="input-label">Monto ($)</label>
               <input className="input-field" type="number" inputMode="numeric" min={0} value={simMonto || ''} onChange={e => setSimMonto(Math.max(0, Number(e.target.value)))} placeholder="0" />
@@ -284,30 +284,29 @@ export default function Deudas() {
               <input className="input-field" type="number" inputMode="numeric" min={1} value={simPlazo} onChange={e => setSimPlazo(Math.max(1, Number(e.target.value)))} />
             </div>
             <div>
-              <label className="input-label">Tasa mensual (%)</label>
+              <label className="input-label">Tasa % mensual</label>
               <input className="input-field" type="number" inputMode="decimal" step="0.1" min={0} value={simTasa} onChange={e => setSimTasa(Math.max(0, Number(e.target.value)))} />
             </div>
           </div>
 
-          {simMonto > 0 && (
-            <div style={{
-              background: 'var(--bg-surface-3)', borderRadius: 'var(--radius-md)', padding: '14px',
-              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px',
-            }}>
-              <div>
-                <p className="label-uppercase" style={{ marginBottom: '4px' }}>Cuota mensual</p>
-                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '18px', color: 'var(--income)' }}>
-                  {formatCOP(Math.round(cuotaSim))}
-                </p>
-              </div>
-              <div>
-                <p className="label-uppercase" style={{ marginBottom: '4px' }}>Total intereses</p>
-                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '18px', color: 'var(--expense)' }}>
-                  {formatCOP(Math.round(Math.max(0, totalIntereses)))}
-                </p>
-              </div>
+          <div style={{
+            background: 'var(--bg-surface-3)', borderRadius: 'var(--radius-md)', padding: '14px',
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px',
+            opacity: simMonto > 0 ? 1 : 0.45,
+          }}>
+            <div>
+              <p className="label-uppercase" style={{ marginBottom: '4px' }}>Cuota mensual</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '18px', color: 'var(--income)' }}>
+                {simMonto > 0 ? formatCOP(Math.round(cuotaSim)) : '—'}
+              </p>
             </div>
-          )}
+            <div>
+              <p className="label-uppercase" style={{ marginBottom: '4px' }}>Total intereses</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '18px', color: 'var(--expense)' }}>
+                {simMonto > 0 ? formatCOP(Math.round(Math.max(0, totalIntereses))) : '—'}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 

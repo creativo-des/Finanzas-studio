@@ -132,21 +132,34 @@ export default function Metas() {
                     ¡Meta completada! 🎉
                   </p>
                 ) : (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      Mensualidad: {formatCOP(meta.mensualidadNecesaria)}
-                    </p>
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => { setAbonoId(meta.id); setAbono(0) }}
-                      style={{
-                        padding: '6px 14px', borderRadius: 'var(--radius-md)',
-                        border: 'none', background: 'var(--income-dim)',
-                        color: 'var(--income)', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                      }}
-                    >
-                      + Abonar
-                    </motion.button>
+                  <div style={{ marginTop: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        Mensualidad: {formatCOP(meta.mensualidadNecesaria)}
+                      </p>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => { setAbonoId(meta.id); setAbono(0) }}
+                        style={{
+                          padding: '6px 14px', borderRadius: 'var(--radius-md)',
+                          border: 'none', background: 'var(--income-dim)',
+                          color: 'var(--income)', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                        }}
+                      >
+                        + Abonar
+                      </motion.button>
+                    </div>
+                    {meta.mensualidadNecesaria > 0 && meta.metaTotal > meta.ahorroActual && (() => {
+                      const mesesRestantes = Math.ceil((meta.metaTotal - meta.ahorroActual) / meta.mensualidadNecesaria)
+                      const fecha = new Date()
+                      fecha.setMonth(fecha.getMonth() + mesesRestantes)
+                      const fechaStr = fecha.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
+                      return (
+                        <p style={{ fontSize: '11px', color: 'var(--accent)', marginTop: '6px' }}>
+                          Completarás esta meta en {fechaStr}
+                        </p>
+                      )
+                    })()}
                   </div>
                 )}
               </div>
