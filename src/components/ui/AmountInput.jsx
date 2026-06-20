@@ -14,6 +14,8 @@ export default function AmountInput({ value, onChange, placeholder = '0', autoFo
     <div style={{
       display: 'flex',
       alignItems: 'center',
+      width: '100%',
+      minWidth: 0,
       background: 'var(--bg-surface-3)',
       border: '1px solid var(--border)',
       borderRadius: 'var(--radius-md)',
