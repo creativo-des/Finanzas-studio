@@ -4,7 +4,7 @@ import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { calcTotalesEstudio } from '../utils/calculations'
 import { formatCOP } from '../utils/formatCurrency'
-import { formatFecha, nombreMesCorto } from '../utils/dateHelpers'
+import { formatFechaHora, nombreMesCorto } from '../utils/dateHelpers'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import Sheet from '../components/ui/Sheet'
@@ -340,7 +340,7 @@ export default function Estudio() {
               >
                 <div>
                   <p style={{ fontSize: '15px', fontWeight: 500 }}>{i.cliente || 'Sin cliente'}</p>
-                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{i.servicio} · {formatFecha(i.fecha)}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{i.servicio} · {formatFechaHora(i.fecha)}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', color: 'var(--income)' }}>
@@ -414,7 +414,7 @@ export default function Estudio() {
                 >
                   <div>
                     <p style={{ fontSize: '15px', fontWeight: 500 }}>{g.concepto || 'Sin concepto'}</p>
-                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{g.categoria} · {formatFecha(g.fecha)}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{g.categoria} · {formatFechaHora(g.fecha)}</p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', color: 'var(--expense)' }}>

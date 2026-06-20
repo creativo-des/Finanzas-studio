@@ -5,7 +5,7 @@ import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { calcTotalesPersonal, calcTotalesMes } from '../utils/calculations'
 import { formatCOP } from '../utils/formatCurrency'
-import { nombreMes } from '../utils/dateHelpers'
+import { nombreMes, formatFechaHora } from '../utils/dateHelpers'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import Sheet from '../components/ui/Sheet'
@@ -491,6 +491,11 @@ export default function Personal() {
                   <p style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)' }}>
                     {ing.fuente}
                   </p>
+                  {ing.registradoEn && (
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      {formatFechaHora(ing.registradoEn)}
+                    </p>
+                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '15px', color: 'var(--income)' }}>

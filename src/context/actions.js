@@ -87,7 +87,7 @@ export function reducer(state, action) {
             ...state.personal.ingresosMensuales,
             [anio]: {
               ...state.personal.ingresosMensuales?.[anio],
-              [mes]: [...prev, { id: uid(), ...action.payload }],
+              [mes]: [...prev, { id: uid(), registradoEn: new Date().toISOString(), ...action.payload }],
             },
           },
         },
