@@ -401,3 +401,191 @@ select.input-field { cursor: pointer; }
   --bg-surface-3:  #131E2E;
   --glass-bg:      rgba(10,16,24,0.85);
 }
+
+/* ── Tarjeta flip (Uiverse.io) ─────────────────────────── */
+.flip-card {
+  background-color: transparent;
+  width: 240px;
+  height: 154px;
+  perspective: 1000px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.flip-card .flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+
+.flip-card:hover .flip-card-inner,
+.flip-card.is-flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.flip-card-front {
+  box-shadow: rgba(0,0,0,0.4) 0px 2px 2px, rgba(0,0,0,0.3) 0px 7px 13px -3px, rgba(0,0,0,0.2) 0px -1px 0px inset;
+  background-color: #171717;
+}
+
+.flip-card-back {
+  box-shadow: rgba(0,0,0,0.4) 0px 2px 2px, rgba(0,0,0,0.3) 0px 7px 13px -3px, rgba(0,0,0,0.2) 0px -1px 0px inset;
+  background-color: #171717;
+  transform: rotateY(180deg);
+}
+
+/* Elementos posicionados — scoped bajo .flip-card */
+.flip-card .heading_8264 {
+  position: absolute;
+  letter-spacing: .2em;
+  font-size: 0.5em;
+  top: 2em;
+  right: 1em;
+  text-align: right;
+  line-height: 1.8;
+}
+
+.flip-card .chip {
+  position: absolute;
+  top: 2.3em;
+  left: 1.5em;
+  line-height: 0;
+}
+
+.flip-card .contactless {
+  position: absolute;
+  top: 3.5em;
+  left: 12.4em;
+  line-height: 0;
+}
+
+.flip-card .number {
+  position: absolute;
+  font-weight: bold;
+  font-size: .6em;
+  top: 8.3em;
+  left: 1.6em;
+  letter-spacing: 0.14em;
+  font-family: 'Courier New', 'Lucida Console', monospace;
+}
+
+/* Corregido — el original tenía valores rotos (top: 635.8em) */
+.flip-card .valid_thru {
+  position: absolute;
+  font-weight: 600;
+  font-size: 0.38em;
+  top: 14.2em;
+  left: 3.5em;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+.flip-card .date_8264 {
+  position: absolute;
+  font-weight: bold;
+  font-size: 0.5em;
+  top: 13.6em;
+  left: 3.2em;
+  letter-spacing: 0.05em;
+}
+
+.flip-card .name {
+  position: absolute;
+  font-weight: bold;
+  font-size: 0.5em;
+  top: 16.1em;
+  left: 2em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  max-width: 14em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flip-card .logo {
+  position: absolute;
+  top: 6.8em;
+  right: 0.8em;
+  line-height: 0;
+}
+
+/* Reverso */
+.flip-card .strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1.5em;
+  top: 2.4em;
+  background: repeating-linear-gradient(
+    45deg,
+    #303030,
+    #303030 10px,
+    #202020 10px,
+    #202020 20px
+  );
+}
+
+.flip-card .mstrip {
+  position: absolute;
+  background-color: #fff;
+  width: 8em;
+  height: 0.8em;
+  top: 5em;
+  left: .8em;
+  border-radius: 2.5px;
+}
+
+.flip-card .sstrip {
+  position: absolute;
+  background-color: #fff;
+  width: 4.1em;
+  height: 0.8em;
+  top: 5em;
+  left: 10em;
+  border-radius: 2.5px;
+}
+
+.flip-card .code {
+  font-weight: bold;
+  text-align: center;
+  margin: .2em;
+  color: black;
+  font-size: 0.8em;
+}
+
+/* Banco info en débito (reverso) */
+.flip-card .back-info {
+  position: absolute;
+  bottom: 1.2em;
+  left: 1.2em;
+  text-align: left;
+}
+
+.flip-card .back-info p:first-child {
+  font-weight: 700;
+  font-size: 0.55em;
+  letter-spacing: 0.1em;
+  opacity: 0.85;
+}
+
+.flip-card .back-info p:last-child {
+  font-size: 0.42em;
+  opacity: 0.5;
+  margin-top: 0.4em;
+  letter-spacing: 0.04em;
+}
