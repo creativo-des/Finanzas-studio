@@ -69,71 +69,70 @@ export default function CategoryDonutChart({ categorias, transacciones }) {
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Donut */}
-          <div style={{ position: 'relative', width: '160px', height: '160px', flexShrink: 0 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={52}
-                  outerRadius={72}
-                  dataKey="value"
-                  strokeWidth={0}
-                >
-                  {data.map((entry) => (
-                    <Cell key={entry.key} fill={CAT_COLORES[entry.key] || '#9898B8'} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-            {/* Centro */}
-            <div style={{
-              position: 'absolute', inset: 0,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              pointerEvents: 'none',
+        {/* Donut centrada */}
+        <div style={{ position: 'relative', width: '200px', height: '200px', margin: '12px auto 0' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={68}
+                outerRadius={92}
+                dataKey="value"
+                strokeWidth={0}
+              >
+                {data.map((entry) => (
+                  <Cell key={entry.key} fill={CAT_COLORES[entry.key] || '#9898B8'} />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+          {/* Centro */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            pointerEvents: 'none',
+          }}>
+            <p style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
+              {fromTransacciones ? 'gastado' : 'presup.'}
+            </p>
+            <p style={{
+              fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px',
+              color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums', marginTop: '2px',
             }}>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
-                {fromTransacciones ? 'gastado' : 'presup.'}
-              </p>
-              <p style={{
-                fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '13px',
-                color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums', marginTop: '2px',
-              }}>
-                {formatCOP(total)}
-              </p>
-            </div>
+              {formatCOP(total)}
+            </p>
           </div>
+        </div>
 
-          {/* Leyenda top 5 */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {top5.map(d => {
-              const pct = total > 0 ? (d.value / total) * 100 : 0
-              return (
-                <div key={d.key}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                      {d.emoji} {d.name}
-                    </span>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                      {pct.toFixed(0)}%
-                    </span>
-                  </div>
-                  <div style={{ height: '3px', background: 'var(--border-strong)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{
-                      height: '100%', width: `${pct}%`,
-                      background: CAT_COLORES[d.key] || '#9898B8',
-                      borderRadius: '2px',
-                      transition: 'width 0.6s ease',
-                    }} />
-                  </div>
+        {/* Leyenda en grid 2 columnas */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 16px', marginTop: '16px' }}>
+          {top5.map(d => {
+            const pct = total > 0 ? (d.value / total) * 100 : 0
+            return (
+              <div key={d.key}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>{d.emoji}</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70px' }}>{d.name}</span>
+                  </span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                    {pct.toFixed(0)}%
+                  </span>
                 </div>
-              )
-            })}
-          </div>
+                <div style={{ height: '3px', background: 'var(--border-strong)', borderRadius: '2px', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', width: `${pct}%`,
+                    background: CAT_COLORES[d.key] || '#9898B8',
+                    borderRadius: '2px',
+                    transition: 'width 0.6s ease',
+                  }} />
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
