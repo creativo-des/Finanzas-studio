@@ -23,7 +23,7 @@ export default function TabBar() {
   const tabs = mode === 'estudio' ? ESTUDIO_TABS : PERSONAL_TABS
 
   return (
-    <nav style={{
+    <nav className="mobile-tabbar" style={{
       position: 'fixed',
       bottom: 'calc(20px + env(safe-area-inset-bottom))',
       left: '50%',

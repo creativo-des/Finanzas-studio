@@ -1,9 +1,6 @@
 export const seedData = {
   personal: {
-    ingresos: [
-      { id: '1', nombre: 'Salario mensual (neto)', tipo: 'fijo', monto: 1800000, activo: true },
-      { id: '2', nombre: 'Disegnarus', tipo: 'variable', monto: 50000, activo: true },
-    ],
+    ingresosMensuales: {},
     presupuesto: {
       categorias: {
         casa: {
@@ -95,29 +92,11 @@ export const seedData = {
         '12': { transacciones: [], totalGastado: 0 },
       },
     },
-    tarjetas: [
-      { id: 'tk1', banco: 'Av Villas', nombre: 'Crédito Av Auteco', tipo: 'credito', limite: 3600000, saldoActual: 1200000, tasa: 2.6, color: '#7C6FF7', fechaCorte: 25, fechaPago: 10 },
-      { id: 'tk2', banco: 'Falabella', nombre: 'Crédito Falabella', tipo: 'credito', limite: 500000,  saldoActual: 85000,   tasa: 1.9, color: '#4F9EF8', fechaCorte: 20, fechaPago: 5  },
-      { id: 'tk3', banco: 'Lulo Bank', nombre: 'Débito Lulo',       tipo: 'debito',  limite: 0,       saldoActual: 350000,  tasa: 0,   color: '#2DD4A4', fechaCorte: 0,  fechaPago: 0  },
-      { id: 'tk4', banco: 'Nequi',     nombre: 'Nequi',             tipo: 'debito',  limite: 0,       saldoActual: 80000,   tasa: 0,   color: '#F5B731', fechaCorte: 0,  fechaPago: 0  },
-    ],
-    deudas: [
-      { id: 'deu1', tipo: 'Tecnología', emoji: '💻', deudaInicial: 10100000, deudaActual: 9786702, mensualidad: 502849, completado: 3.1 },
-    ],
-    metas: [
-      { id: 'meta1', nombre: 'Compra importante', emoji: '💰', ahorroActual: 0, mesesPlan: 18, tasaInteres: 10, metaTotal: 20000000, mensualidadNecesaria: 1034470 },
-      { id: 'meta2', nombre: 'Vacaciones',        emoji: '🏖️', ahorroActual: 0, mesesPlan: 12, tasaInteres: 10, metaTotal: 4500000,  mensualidadNecesaria: 358121  },
-    ],
-    patrimonio: {
-      activos: [
-        { id: 'pa1', tipo: 'Casa/Departamento', emoji: '🏠', nombre: 'Depa Calle 123, Colonia ABC', valorActual: 250000000 },
-        { id: 'pa2', tipo: 'Acciones',          emoji: '📈', nombre: 'Portafolio 1',                valorActual: 11500000  },
-        { id: 'pa3', tipo: 'Terreno',           emoji: '🌳', nombre: 'Terreno de la abuela',        valorActual: 30000000  },
-        { id: 'pa4', tipo: 'Cuenta de Ahorro',  emoji: '💰', nombre: 'Ahorro en Cetes',             valorActual: 4500000   },
-        { id: 'pa5', tipo: 'Cuenta de Ahorro',  emoji: '💰', nombre: 'Fondo de emergencia',         valorActual: 3400000   },
-      ],
-    },
-    metaAhorro: 0.25,
+    tarjetas: [],
+    deudas: [],
+    metas: [],
+    patrimonio: { activos: [] },
+    metaAhorro: 0.20,
   },
 
   estudio: {
@@ -133,17 +112,14 @@ export const seedData = {
     },
   },
 
-  suscripciones: [
-    { id: 'sub1', nombre: 'Netflix', emoji: '🎬', monto: 24900, moneda: 'COP', frecuencia: 'mensual', diaPago: 15, categoria: 'personal', metodo: 'credito', tarjetaId: 'tk1', activa: true, color: '#E50914' },
-    { id: 'sub2', nombre: 'Spotify', emoji: '🎵', monto: 17900, moneda: 'COP', frecuencia: 'mensual', diaPago: 15, categoria: 'personal', metodo: 'credito', tarjetaId: 'tk1', activa: true, color: '#1DB954' },
-    { id: 'sub3', nombre: 'Max',     emoji: '📺', monto: 19900, moneda: 'COP', frecuencia: 'mensual', diaPago: 10, categoria: 'personal', metodo: 'credito', tarjetaId: 'tk1', activa: true, color: '#002BE7' },
-  ],
+  suscripciones: [],
 
   config: {
     moneda: 'COP',
-    nombre: 'Disegnarus',
+    nombre: 'Usuario',
     tema: 'dark',
     mesActual: '06',
     anioActual: '2026',
+    onboardingDone: false,
   },
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useEffect, useMemo, useRef } from 'react'
+import { createContext, useContext, useReducer, useEffect, useMemo, useRef, useState } from 'react'
 import { seedData } from '../utils/seedData'
 import { reducer, ACTIONS } from './actions'
 import { supabase } from '../lib/supabase'
@@ -13,7 +13,11 @@ const mergeWithSeed = (parsed) => {
   const mergedConfig   = { ...seedData.config, ...parsed.config, anioActual: currentYear }
   const mergedEstudio  = { ...seedData.estudio, ...parsed.estudio }
   if (!mergedEstudio.distribucion) mergedEstudio.distribucion = seedData.estudio.distribucion
-  return { ...seedData, ...parsed, personal: { ...seedData.personal, ...parsed.personal }, estudio: mergedEstudio, config: mergedConfig }
+  const mergedPersonal = { ...seedData.personal, ...parsed.personal }
+  // Migrate old flat-ingresos → ingresosMensuales (remove legacy field)
+  if (!mergedPersonal.ingresosMensuales) mergedPersonal.ingresosMensuales = {}
+  delete mergedPersonal.ingresos
+  return { ...seedData, ...parsed, personal: mergedPersonal, estudio: mergedEstudio, config: mergedConfig }
 }
 
 const loadLocal = (profileId) => {
@@ -27,12 +31,14 @@ const loadLocal = (profileId) => {
 
 export function FinanceProvider({ children, profileId }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => loadLocal(profileId))
+  const [cloudLoading, setCloudLoading] = useState(true)
   const syncTimer    = useRef(null)
-  const cloudReady   = useRef(false)  // prevent initial race: don't save before cloud data loads
+  const cloudReady   = useRef(false)
 
   // On mount: load cloud data (authoritative source)
   useEffect(() => {
     cloudReady.current = false
+    setCloudLoading(true)
     supabase
       .from('finance_data')
       .select('data')
@@ -44,10 +50,15 @@ export function FinanceProvider({ children, profileId }) {
         }
         if (data?.data) {
           const merged = mergeWithSeed(data.data)
+          // Existing users with saved cloud data skip onboarding
+          if (!merged.config.onboardingDone) {
+            merged.config.onboardingDone = true
+          }
           dispatch({ type: ACTIONS.IMPORT_DATA, data: merged })
           localStorage.setItem(makeKey(profileId), JSON.stringify(merged))
         }
         cloudReady.current = true
+        setCloudLoading(false)
       })
   }, [profileId])
 
@@ -72,7 +83,7 @@ export function FinanceProvider({ children, profileId }) {
     return () => clearTimeout(syncTimer.current)
   }, [state, profileId])
 
-  const value = useMemo(() => ({ state, dispatch }), [state])
+  const value = useMemo(() => ({ state, dispatch, cloudLoading }), [state, cloudLoading])
 
   return (
     <FinanceContext.Provider value={value}>
