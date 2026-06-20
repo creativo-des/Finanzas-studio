@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'
+import AppTour from '../components/ui/AppTour'
 import { calcTotalesPersonal, calcTotalesMes, calcTotalesEstudio } from '../utils/calculations'
 import { formatCOP } from '../utils/formatCurrency'
 import { nombreMes } from '../utils/dateHelpers'
@@ -54,7 +55,10 @@ function ModeSwitcher() {
 export default function Dashboard() {
   const { state, dispatch } = useFinance()
   const { mode } = useAuth()
-  const { mesActual, anioActual, nombre } = state.config
+  const { mesActual, anioActual, nombre, tourDone } = state.config
+
+  const handleTourDone = () =>
+    dispatch({ type: ACTIONS.SET_CONFIG, payload: { tourDone: true } })
 
   const hora = new Date().getHours()
   const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches'
@@ -234,15 +238,17 @@ export default function Dashboard() {
     : 0
 
   return (
-    <PageLayout
-      header={
-        <PageHeader
-          subtitle={`${nombreMes(mesActual)} ${anioActual}`}
-          title={`${saludo}, ${nombre} 👋`}
-          rightContent={<ModeSwitcher />}
-        />
-      }
-    >
+    <>
+      {!tourDone && <AppTour onDone={handleTourDone} />}
+      <PageLayout
+        header={
+          <PageHeader
+            subtitle={`${nombreMes(mesActual)} ${anioActual}`}
+            title={`${saludo}, ${nombre} 👋`}
+            rightContent={<ModeSwitcher />}
+          />
+        }
+      >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingTop: '4px', paddingBottom: '8px' }}>
 
         {/* ── 1. Hero (full width) ─────────────────────────── */}
@@ -358,5 +364,6 @@ export default function Dashboard() {
 
       </div>
     </PageLayout>
+    </>
   )
 }

@@ -50,12 +50,11 @@ export function FinanceProvider({ children, profileId }) {
         }
         if (data?.data) {
           const merged = mergeWithSeed(data.data)
-          // Existing users with saved cloud data skip onboarding
-          if (!merged.config.onboardingDone) {
-            merged.config.onboardingDone = true
-          }
-          dispatch({ type: ACTIONS.IMPORT_DATA, data: merged })
-          localStorage.setItem(makeKey(profileId), JSON.stringify(merged))
+          const needsReset = !merged.config.dataVersion || merged.config.dataVersion < 2
+          const toLoad = needsReset ? mergeWithSeed(null) : merged
+          if (needsReset) localStorage.removeItem(makeKey(profileId))
+          dispatch({ type: ACTIONS.IMPORT_DATA, data: toLoad })
+          localStorage.setItem(makeKey(profileId), JSON.stringify(toLoad))
         }
         cloudReady.current = true
         setCloudLoading(false)
