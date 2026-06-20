@@ -3,7 +3,7 @@ import { Bell } from 'lucide-react'
 
 export default function PageHeader({ title, subtitle, showBell = false, alertCount = 0, onBellClick, rightContent }) {
   return (
-    <header style={{
+    <header className="page-header" style={{
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'space-between',

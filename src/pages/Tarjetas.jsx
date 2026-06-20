@@ -386,9 +386,11 @@ export default function Tarjetas() {
         {credito.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <p className="label-uppercase">Tarjetas de crédito</p>
-            {credito.map(tk => (
-              <TarjetaCard key={tk.id} tk={tk} onClick={() => openEdit(tk)} />
-            ))}
+            <div className="tarjetas-list">
+              {credito.map(tk => (
+                <TarjetaCard key={tk.id} tk={tk} onClick={() => openEdit(tk)} />
+              ))}
+            </div>
           </div>
         )}
 
@@ -396,9 +398,11 @@ export default function Tarjetas() {
         {debito.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <p className="label-uppercase">Tarjetas de débito</p>
-            {debito.map(tk => (
-              <TarjetaCard key={tk.id} tk={tk} onClick={() => openEdit(tk)} />
-            ))}
+            <div className="tarjetas-list">
+              {debito.map(tk => (
+                <TarjetaCard key={tk.id} tk={tk} onClick={() => openEdit(tk)} />
+              ))}
+            </div>
           </div>
         )}
 

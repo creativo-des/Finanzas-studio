@@ -226,7 +226,7 @@ export default function Dashboard() {
   }
 
   // ── Modo Personal ────────────────────────────────────────────────
-  const totales = calcTotalesPersonal(state)
+  const totales = calcTotalesPersonal(state, mesActual, anioActual)
   const { transacciones, totalGastado } = calcTotalesMes(state, mesActual, anioActual)
   const disponibleReal = totales.totalIngresos - totalGastado
   const porcentajeReal = totales.totalIngresos > 0
@@ -245,7 +245,7 @@ export default function Dashboard() {
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingTop: '4px', paddingBottom: '8px' }}>
 
-        {/* ── 1. Hero ─────────────────────────────────────── */}
+        {/* ── 1. Hero (full width) ─────────────────────────── */}
         <HeroCard
           disponible={disponibleReal}
           totalIngresos={totales.totalIngresos}
@@ -253,99 +253,108 @@ export default function Dashboard() {
           porcentajeUsado={porcentajeReal}
         />
 
-        {/* ── 2. Resumen financiero (tasa de ahorro + alerta) ── */}
-        <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {/* ── 2-col: main left / aside right ──────────────── */}
+        <div className="dash-cols">
 
-          {/* Alerta presupuesto > ingresos */}
-          {totales.totalPresupuesto > totales.totalIngresos && totales.totalIngresos > 0 && (
-            <div style={{
-              background: 'rgba(245,183,49,0.10)',
-              border: '1px solid rgba(245,183,49,0.35)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '12px 16px',
-              display: 'flex', alignItems: 'center', gap: '10px',
-            }}>
-              <span style={{ fontSize: '20px', flexShrink: 0 }}>⚠️</span>
-              <div>
-                <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--warning)', marginBottom: '2px' }}>
-                  Presupuesto excede tus ingresos
-                </p>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  Déficit de {formatCOP(totales.totalPresupuesto - totales.totalIngresos)} — revisa tus categorías
-                </p>
-              </div>
-            </div>
-          )}
+          {/* ── Left: resumen, mes, categorías ──────────────── */}
+          <div className="dash-col-main">
 
-          {/* Tasa de ahorro + ejecución presupuesto */}
-          <div style={{
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '16px 20px',
-          }}>
-            <p className="label-uppercase" style={{ marginBottom: '12px' }}>
-              Resumen · {nombreMes(mesActual)}
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '14px' }}>
-              <div>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Tasa de ahorro</p>
-                <p style={{
-                  fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '24px',
-                  color: disponibleReal >= 0 ? 'var(--income)' : 'var(--expense)',
-                  fontVariantNumeric: 'tabular-nums',
+            {/* Summary section: alert + tasa ahorro */}
+            <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+              {/* Alerta presupuesto > ingresos */}
+              {totales.totalPresupuesto > totales.totalIngresos && totales.totalIngresos > 0 && (
+                <div style={{
+                  background: 'rgba(245,183,49,0.10)',
+                  border: '1px solid rgba(245,183,49,0.35)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '12px 16px',
+                  display: 'flex', alignItems: 'center', gap: '10px',
                 }}>
-                  {totales.totalIngresos > 0 ? Math.max(0, Math.round((disponibleReal / totales.totalIngresos) * 100)) : 0}%
+                  <span style={{ fontSize: '20px', flexShrink: 0 }}>⚠️</span>
+                  <div>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--warning)', marginBottom: '2px' }}>
+                      Presupuesto excede tus ingresos
+                    </p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      Déficit de {formatCOP(totales.totalPresupuesto - totales.totalIngresos)} — revisa tus categorías
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Tasa de ahorro + ejecución presupuesto */}
+              <div style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '16px 20px',
+              }}>
+                <p className="label-uppercase" style={{ marginBottom: '12px' }}>
+                  Resumen · {nombreMes(mesActual)}
                 </p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Presupuesto usado</p>
-                <p style={{
-                  fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '24px',
-                  color: totales.totalPresupuesto > 0 && totalGastado > totales.totalPresupuesto ? 'var(--expense)' : 'var(--text-primary)',
-                  fontVariantNumeric: 'tabular-nums',
-                }}>
-                  {totales.totalPresupuesto > 0 ? Math.round((totalGastado / totales.totalPresupuesto) * 100) : 0}%
-                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '14px' }}>
+                  <div>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Tasa de ahorro</p>
+                    <p style={{
+                      fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '24px',
+                      color: disponibleReal >= 0 ? 'var(--income)' : 'var(--expense)',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}>
+                      {totales.totalIngresos > 0 ? Math.max(0, Math.round((disponibleReal / totales.totalIngresos) * 100)) : 0}%
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Presupuesto usado</p>
+                    <p style={{
+                      fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '24px',
+                      color: totales.totalPresupuesto > 0 && totalGastado > totales.totalPresupuesto ? 'var(--expense)' : 'var(--text-primary)',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}>
+                      {totales.totalPresupuesto > 0 ? Math.round((totalGastado / totales.totalPresupuesto) * 100) : 0}%
+                    </p>
+                  </div>
+                </div>
+                <ProgressBar percent={totales.totalPresupuesto > 0 ? Math.min(100, (totalGastado / totales.totalPresupuesto) * 100) : 0} size="lg" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Gastado: {formatCOP(totalGastado)}
+                  </span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Presupuesto: {formatCOP(totales.totalPresupuesto)}
+                  </span>
+                </div>
               </div>
             </div>
-            <ProgressBar percent={totales.totalPresupuesto > 0 ? Math.min(100, (totalGastado / totales.totalPresupuesto) * 100) : 0} size="lg" />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                Gastado: {formatCOP(totalGastado)}
-              </span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                Presupuesto: {formatCOP(totales.totalPresupuesto)}
-              </span>
+
+            {/* Selector de mes (has own padding: 0 20px) */}
+            <MonthSelector mesActual={mesActual} onSelect={handleMesChange} />
+
+            {/* Gastos por categoría */}
+            <div>
+              <div style={{ padding: '0 20px', marginBottom: '12px' }}>
+                <p className="label-uppercase">Gastos por categoría</p>
+              </div>
+              {/* CategoryGrid has own padding: 0 20px */}
+              <CategoryGrid
+                categorias={state.personal.presupuesto.categorias}
+                transacciones={transacciones}
+              />
             </div>
+
           </div>
-        </div>
 
-        {/* ── 3. Gráfica distribución ─────────────────────── */}
-        <CategoryDonutChart
-          categorias={state.personal.presupuesto.categorias}
-          transacciones={transacciones}
-        />
-
-        {/* ── 4. Medios de pago ───────────────────────────── */}
-        <PaymentMethodsBreakdown transacciones={transacciones} />
-
-        {/* ── 5. Selector de mes ──────────────────────────── */}
-        <MonthSelector mesActual={mesActual} onSelect={handleMesChange} />
-
-        {/* ── 6. Gastos por categoría ─────────────────────── */}
-        <div>
-          <div style={{ padding: '0 20px', marginBottom: '12px' }}>
-            <p className="label-uppercase">Gastos por categoría</p>
+          {/* ── Right: gráficas y suscripciones (each has own padding: 0 20px) ── */}
+          <div className="dash-col-aside">
+            <CategoryDonutChart
+              categorias={state.personal.presupuesto.categorias}
+              transacciones={transacciones}
+            />
+            <PaymentMethodsBreakdown transacciones={transacciones} />
+            <UpcomingSubscriptions suscripciones={state.suscripciones} />
           </div>
-          <CategoryGrid
-            categorias={state.personal.presupuesto.categorias}
-            transacciones={transacciones}
-          />
-        </div>
 
-        {/* ── 7. Suscripciones próximas ───────────────────── */}
-        <UpcomingSubscriptions suscripciones={state.suscripciones} />
+        </div>
 
       </div>
     </PageLayout>
