@@ -542,7 +542,7 @@ export default function Onboarding() {
                 </div>
 
                 {/* Montos */}
-                <div style={{ display: 'grid', gridTemplateColumns: cTipo === 'credito' ? '1fr 1fr' : '1fr', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div style={{ minWidth: 0 }}>
                     <label className="input-label">{cTipo === 'credito' ? 'Saldo actual' : 'Saldo disponible'}</label>
                     <AmountInput value={cSaldo} onChange={setCSaldo} />
