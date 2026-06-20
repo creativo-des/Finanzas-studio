@@ -15,7 +15,7 @@ import Toast from '../components/ui/Toast'
 import { useToast } from '../hooks/useToast'
 import { useHaptic } from '../hooks/useHaptic'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { Pencil, Settings2, X as XIcon, Plus as PlusIcon } from 'lucide-react'
+import { Pencil, Settings2, X as XIcon, Plus as PlusIcon, Menu, ChevronRight } from 'lucide-react'
 
 const TABS = ['Ingresos', 'Gastos', 'Reparto', 'Evolución']
 
@@ -56,6 +56,7 @@ export default function Estudio() {
   const { mesActual, anioActual } = state.config
 
   const [tab, setTab] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   // Confirmación de borrado
   const [confirmIngreso, setConfirmIngreso] = useState(null)
@@ -250,22 +251,60 @@ export default function Estudio() {
         ))}
       </div>
 
-      {/* Tabs */}
-      <div className="scroll-x" style={{ padding: '0 20px 16px', gap: '8px' }}>
-        {TABS.map((t, i) => (
-          <motion.button key={t} whileTap={{ scale: 0.95 }} onClick={() => setTab(i)}
+      {/* Tabs — hamburguesa */}
+      <div style={{ margin: '0 20px 16px', position: 'relative', zIndex: 20 }}>
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setMenuOpen(o => !o)}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: 'var(--bg-surface-2)', border: '1px solid var(--border)',
+            borderRadius: menuOpen ? 'var(--radius-lg) var(--radius-lg) 0 0' : 'var(--radius-lg)',
+            padding: '12px 16px', cursor: 'pointer',
+            transition: 'border-radius 0.15s',
+          }}
+        >
+          <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--accent)', fontFamily: 'Inter, sans-serif' }}>
+            {TABS[tab]}
+          </span>
+          <motion.span animate={{ rotate: menuOpen ? 90 : 0 }} transition={{ duration: 0.2 }} style={{ display: 'flex' }}>
+            {menuOpen ? <XIcon size={18} color="var(--text-muted)" /> : <Menu size={18} color="var(--text-muted)" />}
+          </motion.span>
+        </motion.button>
+
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.15 } }}
+            exit={{ opacity: 0, y: -6 }}
             style={{
-              padding: '8px 16px', borderRadius: 'var(--radius-full)',
-              border: `1px solid ${tab === i ? 'var(--accent-border)' : 'var(--border)'}`,
-              background: tab === i ? 'var(--accent-dim)' : 'transparent',
-              color: tab === i ? 'var(--accent)' : 'var(--text-muted)',
-              fontSize: '13px', fontWeight: tab === i ? 600 : 500,
-              cursor: 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
+              position: 'absolute', top: '100%', left: 0, right: 0,
+              background: 'var(--bg-surface-2)', border: '1px solid var(--border)',
+              borderTop: 'none', borderRadius: '0 0 var(--radius-lg) var(--radius-lg)',
+              overflow: 'hidden',
             }}
           >
-            {t}
-          </motion.button>
-        ))}
+            {TABS.map((t, i) => (
+              <motion.button
+                key={t} whileTap={{ scale: 0.98 }}
+                onClick={() => { setTab(i); setMenuOpen(false) }}
+                style={{
+                  width: '100%', padding: '13px 16px', textAlign: 'left',
+                  background: tab === i ? 'var(--accent-dim)' : 'transparent',
+                  border: 'none',
+                  borderBottom: i < TABS.length - 1 ? '1px solid var(--border)' : 'none',
+                  color: tab === i ? 'var(--accent)' : 'var(--text-secondary)',
+                  fontWeight: tab === i ? 700 : 400, fontSize: '14px',
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>{['💰', '💸', '🤝', '📈'][i]}</span>
+                {t}
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
       </div>
 
       {/* ── TAB: Ingresos ───────────── */}
