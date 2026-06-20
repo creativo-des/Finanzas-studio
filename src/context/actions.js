@@ -3,10 +3,10 @@ export const ACTIONS = {
   SET_MES_ACTUAL: 'SET_MES_ACTUAL',
   SET_CONFIG: 'SET_CONFIG',
 
-  // Personal - ingresos
-  ADD_INGRESO: 'ADD_INGRESO',
-  UPDATE_INGRESO: 'UPDATE_INGRESO',
-  DELETE_INGRESO: 'DELETE_INGRESO',
+  // Personal - ingresos mensuales
+  ADD_INGRESO_MES: 'ADD_INGRESO_MES',
+  UPDATE_INGRESO_MES: 'UPDATE_INGRESO_MES',
+  DELETE_INGRESO_MES: 'DELETE_INGRESO_MES',
 
   // Personal - presupuesto
   ADD_ITEM_CATEGORIA: 'ADD_ITEM_CATEGORIA',
@@ -76,32 +76,59 @@ export function reducer(state, action) {
     case ACTIONS.SET_CONFIG:
       return { ...state, config: { ...state.config, ...action.payload } }
 
-    case ACTIONS.ADD_INGRESO:
+    case ACTIONS.ADD_INGRESO_MES: {
+      const { mes, anio } = action
+      const prev = state.personal.ingresosMensuales?.[anio]?.[mes] || []
       return {
         ...state,
         personal: {
           ...state.personal,
-          ingresos: [...state.personal.ingresos, { id: uid(), ...action.payload, activo: true }],
+          ingresosMensuales: {
+            ...state.personal.ingresosMensuales,
+            [anio]: {
+              ...state.personal.ingresosMensuales?.[anio],
+              [mes]: [...prev, { id: uid(), ...action.payload }],
+            },
+          },
         },
       }
+    }
 
-    case ACTIONS.UPDATE_INGRESO:
+    case ACTIONS.UPDATE_INGRESO_MES: {
+      const { mes, anio } = action
+      const entries = state.personal.ingresosMensuales?.[anio]?.[mes] || []
       return {
         ...state,
         personal: {
           ...state.personal,
-          ingresos: state.personal.ingresos.map(i => i.id === action.id ? { ...i, ...action.payload } : i),
+          ingresosMensuales: {
+            ...state.personal.ingresosMensuales,
+            [anio]: {
+              ...state.personal.ingresosMensuales?.[anio],
+              [mes]: entries.map(i => i.id === action.id ? { ...i, ...action.payload } : i),
+            },
+          },
         },
       }
+    }
 
-    case ACTIONS.DELETE_INGRESO:
+    case ACTIONS.DELETE_INGRESO_MES: {
+      const { mes, anio } = action
+      const entries = state.personal.ingresosMensuales?.[anio]?.[mes] || []
       return {
         ...state,
         personal: {
           ...state.personal,
-          ingresos: state.personal.ingresos.filter(i => i.id !== action.id),
+          ingresosMensuales: {
+            ...state.personal.ingresosMensuales,
+            [anio]: {
+              ...state.personal.ingresosMensuales?.[anio],
+              [mes]: entries.filter(i => i.id !== action.id),
+            },
+          },
         },
       }
+    }
 
     case ACTIONS.ADD_ITEM_CATEGORIA:
       return {

@@ -1,21 +1,26 @@
-export const calcTotalesPersonal = (state) => {
-  const totalIngresos = state.personal.ingresos
-    .filter(i => i.activo)
-    .reduce((s, i) => s + i.monto, 0)
+export const calcTotalesPersonal = (state, mes, anio) => {
+  const ingresosMes = state.personal.ingresosMensuales?.[anio]?.[mes] || []
+  const totalIngresos = ingresosMes.reduce((s, i) => s + i.monto, 0)
 
+  // duracionMeses support: monthly cost = monto / duracionMeses
   const totalPresupuesto = Object.values(state.personal.presupuesto.categorias)
     .reduce((s, cat) => {
       const catBudget = cat.presupuesto != null
         ? cat.presupuesto
-        : cat.items.reduce((cs, i) => cs + i.monto, 0)
+        : cat.items.reduce((cs, i) => cs + i.monto / (i.duracionMeses || 1), 0)
       return s + catBudget
     }, 0)
 
   const disponible = totalIngresos - totalPresupuesto
   const porcentajeUsado = totalIngresos > 0 ? (totalPresupuesto / totalIngresos) * 100 : 0
-  const metaCumplida = disponible >= totalIngresos * state.personal.metaAhorro
+  const metaCumplida = disponible >= totalIngresos * (state.personal.metaAhorro || 0)
 
   return { totalIngresos, totalPresupuesto, disponible, porcentajeUsado, metaCumplida }
+}
+
+export const calcMontoCatMensual = (cat) => {
+  if (cat.presupuesto != null) return cat.presupuesto
+  return cat.items.reduce((s, i) => s + i.monto / (i.duracionMeses || 1), 0)
 }
 
 export const calcTotalesMes = (state, mes, anio) => {

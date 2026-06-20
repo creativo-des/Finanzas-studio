@@ -26,7 +26,7 @@ export default function PersonalMes() {
   const mes = num || state.config.mesActual
   const anio = state.config.anioActual
 
-  const totales = calcTotalesPersonal(state)
+  const totales = calcTotalesPersonal(state, mes, anio)
   const { transacciones, totalGastado } = calcTotalesMes(state, mes, anio)
   const presupuesto = totales.totalPresupuesto
   const disponible = totales.totalIngresos - totalGastado

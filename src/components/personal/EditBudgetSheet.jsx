@@ -19,18 +19,21 @@ export default function EditBudgetSheet({ open, onClose, categoriaKey, item, onS
   const { dispatch } = useFinance()
   const haptic = useHaptic()
 
-  const [nombre, setNombre] = useState('')
-  const [monto, setMonto] = useState(0)
-  const [fijo, setFijo] = useState(true)
-  const [tarjeta, setTarjeta] = useState(true)
-  const [hormiga, setHormiga] = useState(false)
+  const [nombre, setNombre]           = useState('')
+  const [monto, setMonto]             = useState(0)
+  const [duracionMeses, setDuracion]  = useState(1)
+  const [fijo, setFijo]               = useState(true)
+  const [tarjeta, setTarjeta]         = useState(true)
+  const [hormiga, setHormiga]         = useState(false)
 
   const isEditing = !!item
+  const mensual = duracionMeses > 1 ? Math.round(monto / duracionMeses) : monto
 
   useEffect(() => {
     if (open) {
       setNombre(item?.nombre || '')
       setMonto(item?.monto || 0)
+      setDuracion(item?.duracionMeses || 1)
       setFijo(item?.fijo ?? true)
       setTarjeta(item?.tarjeta ?? true)
       setHormiga(item?.hormiga ?? false)
@@ -45,13 +48,13 @@ export default function EditBudgetSheet({ open, onClose, categoriaKey, item, onS
         type: ACTIONS.UPDATE_ITEM_CATEGORIA,
         categoria: categoriaKey,
         id: item.id,
-        payload: { nombre: nombre.trim(), monto, fijo, tarjeta, hormiga },
+        payload: { nombre: nombre.trim(), monto, duracionMeses, fijo, tarjeta, hormiga },
       })
     } else {
       dispatch({
         type: ACTIONS.ADD_ITEM_CATEGORIA,
         categoria: categoriaKey,
-        payload: { nombre: nombre.trim(), monto, fijo, tarjeta, hormiga },
+        payload: { nombre: nombre.trim(), monto, duracionMeses, fijo, tarjeta, hormiga },
       })
     }
 
@@ -90,11 +93,40 @@ export default function EditBudgetSheet({ open, onClose, categoriaKey, item, onS
           />
         </div>
 
-        {/* Monto */}
-        <div>
-          <label className="input-label">Monto mensual</label>
-          <AmountInput value={monto} onChange={setMonto} />
+        {/* Monto + duración */}
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <label className="input-label">
+              {duracionMeses > 1 ? `Monto total (${duracionMeses} meses)` : 'Monto mensual'}
+            </label>
+            <AmountInput value={monto} onChange={setMonto} />
+          </div>
+          <div style={{ width: '90px' }}>
+            <label className="input-label">Duración (meses)</label>
+            <input
+              className="input-field"
+              type="number"
+              min={1}
+              max={60}
+              value={duracionMeses}
+              onChange={e => setDuracion(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
+            />
+          </div>
         </div>
+
+        {/* Preview mensual si duracion > 1 */}
+        {duracionMeses > 1 && monto > 0 && (
+          <div style={{
+            background: 'var(--accent-dim)', border: '1px solid var(--accent-border)',
+            borderRadius: 'var(--radius-md)', padding: '10px 14px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Cuota mensual estimada</p>
+            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', color: 'var(--accent)' }}>
+              {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(mensual)}
+            </p>
+          </div>
+        )}
 
         {/* Toggles */}
         <div style={{
