@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Pencil, Menu, X } from 'lucide-react'
+import { Plus, Pencil } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { calcTotalesPersonal, calcTotalesMes } from '../utils/calculations'
@@ -33,7 +33,6 @@ const NOMBRES_CAT = {
 export default function Personal() {
   const { state, dispatch } = useFinance()
   const [tab, setTab] = useState(0)
-  const [menuOpen, setMenuOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const { toast, showToast } = useToast()
   const haptic = useHaptic()
@@ -169,63 +168,28 @@ export default function Personal() {
     <PageLayout
       header={<PageHeader subtitle={`${nombreMes(mesActual)} ${anioActual}`} title="Finanzas Personales" />}
     >
-      {/* Sub-nav — hamburger dropdown */}
-      <div style={{ margin: '0 20px 16px', position: 'relative', zIndex: 20 }}>
-        {/* Trigger */}
-        <motion.button
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setMenuOpen(o => !o)}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: 'var(--bg-surface-2)', border: '1px solid var(--border)',
-            borderRadius: menuOpen ? 'var(--radius-lg) var(--radius-lg) 0 0' : 'var(--radius-lg)',
-            padding: '12px 16px', cursor: 'pointer',
-            transition: 'border-radius 0.15s',
-          }}
-        >
-          <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--accent)', fontFamily: 'Inter, sans-serif' }}>
-            {TABS[tab]}
-          </span>
-          <motion.span animate={{ rotate: menuOpen ? 90 : 0 }} transition={{ duration: 0.2 }} style={{ display: 'flex' }}>
-            {menuOpen ? <X size={18} color="var(--text-muted)" /> : <Menu size={18} color="var(--text-muted)" />}
-          </motion.span>
-        </motion.button>
-
-        {/* Dropdown */}
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.15 }}
+      {/* Sub-nav — pills */}
+      <div style={{
+        display: 'flex', gap: '6px', padding: '0 20px 16px',
+        overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none',
+      }}>
+        {TABS.map((t, i) => (
+          <motion.button
+            key={t}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setTab(i)}
             style={{
-              position: 'absolute', top: '100%', left: 0, right: 0,
-              background: 'var(--bg-surface-2)', border: '1px solid var(--border)',
-              borderTop: 'none', borderRadius: '0 0 var(--radius-lg) var(--radius-lg)',
-              overflow: 'hidden',
+              padding: '8px 18px', borderRadius: 'var(--radius-full)', flexShrink: 0,
+              border: `1px solid ${tab === i ? 'var(--accent-border)' : 'var(--border)'}`,
+              background: tab === i ? 'var(--accent-dim)' : 'var(--bg-surface)',
+              color: tab === i ? 'var(--accent)' : 'var(--text-secondary)',
+              fontSize: '13px', fontWeight: tab === i ? 600 : 400,
+              cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Inter, sans-serif',
             }}
           >
-            {TABS.map((t, i) => (
-              <motion.button
-                key={t} whileTap={{ scale: 0.98 }}
-                onClick={() => { setTab(i); setMenuOpen(false) }}
-                style={{
-                  width: '100%', padding: '13px 16px', textAlign: 'left',
-                  background: tab === i ? 'var(--accent-dim)' : 'transparent',
-                  border: 'none',
-                  borderBottom: i < TABS.length - 1 ? '1px solid var(--border)' : 'none',
-                  color: tab === i ? 'var(--accent)' : 'var(--text-secondary)',
-                  fontWeight: tab === i ? 700 : 400, fontSize: '14px',
-                  cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                }}
-              >
-                <span style={{ fontSize: '16px' }}>{['💸', '📊', '🎯', '💰'][i]}</span>
-                {t}
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
+            {t}
+          </motion.button>
+        ))}
       </div>
 
       {/* KPIs */}

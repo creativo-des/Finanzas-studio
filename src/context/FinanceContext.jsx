@@ -8,6 +8,17 @@ const FinanceContext = createContext(null)
 const makeKey = (profileId) => `df-data-${profileId}`
 const currentYear = String(new Date().getFullYear())
 
+const saveToCloud = (profileId, state) =>
+  supabase
+    .from('finance_data')
+    .upsert(
+      { user_id: profileId, data: state, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    )
+    .then(({ error }) => {
+      if (error) console.error('[FinanceContext] cloud save error:', error)
+    })
+
 const mergeWithSeed = (parsed) => {
   if (!parsed) return { ...seedData, config: { ...seedData.config, anioActual: currentYear } }
   const mergedConfig   = { ...seedData.config, ...parsed.config, anioActual: currentYear }
@@ -34,6 +45,7 @@ export function FinanceProvider({ children, profileId }) {
   const [cloudLoading, setCloudLoading] = useState(true)
   const syncTimer    = useRef(null)
   const cloudReady   = useRef(false)
+  const pendingSave  = useRef(null)
 
   // On mount: load cloud data (authoritative source)
   useEffect(() => {
@@ -43,13 +55,15 @@ export function FinanceProvider({ children, profileId }) {
       .from('finance_data')
       .select('data')
       .eq('user_id', profileId)
-      .single()
-      .then(({ data, error }) => {
-        if (error && error.code !== 'PGRST116') {
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .then(({ data: rows, error }) => {
+        if (error) {
           console.error('[FinanceContext] cloud load error:', error)
         }
-        if (data?.data) {
-          const merged = mergeWithSeed(data.data)
+        const row = rows?.[0]
+        if (row?.data) {
+          const merged = mergeWithSeed(row.data)
           const needsReset = !merged.config.dataVersion || merged.config.dataVersion < 2
           const toLoad = needsReset ? mergeWithSeed(null) : merged
           if (needsReset) localStorage.removeItem(makeKey(profileId))
@@ -67,20 +81,30 @@ export function FinanceProvider({ children, profileId }) {
       localStorage.setItem(makeKey(profileId), JSON.stringify(state))
     } catch { /* storage full */ }
 
-    if (!cloudReady.current) return  // skip cloud save until initial load completes
+    if (!cloudReady.current) return
 
+    pendingSave.current = state
     clearTimeout(syncTimer.current)
     syncTimer.current = setTimeout(() => {
-      supabase
-        .from('finance_data')
-        .upsert({ user_id: profileId, data: state, updated_at: new Date().toISOString() })
-        .then(({ error }) => {
-          if (error) console.error('[FinanceContext] cloud save error:', error)
-        })
-    }, 2000)
+      pendingSave.current = null
+      saveToCloud(profileId, state)
+    }, 800)
 
     return () => clearTimeout(syncTimer.current)
   }, [state, profileId])
+
+  // Flush pending cloud save when user switches tabs/apps or closes the page
+  useEffect(() => {
+    const flush = () => {
+      if (document.visibilityState === 'hidden' && cloudReady.current && pendingSave.current) {
+        clearTimeout(syncTimer.current)
+        saveToCloud(profileId, pendingSave.current)
+        pendingSave.current = null
+      }
+    }
+    document.addEventListener('visibilitychange', flush)
+    return () => document.removeEventListener('visibilitychange', flush)
+  }, [profileId])
 
   const value = useMemo(() => ({ state, dispatch, cloudLoading }), [state, cloudLoading])
 
