@@ -3,7 +3,6 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Home, User, Building2, CreditCard, MoreHorizontal, Menu, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { User } from 'lucide-react'
 
 const PERSONAL_TABS = [
   { to: '/',         icon: Home,           label: 'Inicio'   },
@@ -21,10 +20,8 @@ const ESTUDIO_TABS = [
 
 export default function TabBar() {
   const location = useLocation()
-  const { mode, switchMode } = useAuth()
-  const tabs = mode === 'estudio' ? ESTUDIO_TABS : PERSONAL_TABS
-
   const { mode, switchMode, activeProfile } = useAuth()
+  const tabs = mode === 'estudio' ? ESTUDIO_TABS : PERSONAL_TABS
 
   const [visible, setVisible] = useState(false)
 
