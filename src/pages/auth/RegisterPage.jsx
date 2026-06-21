@@ -1,9 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Eye, EyeOff, UserPlus, CheckCircle } from 'lucide-react'
+import { Eye, EyeOff, UserPlus, CheckCircle, Camera, User } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-
-const AVATARS = ['🧑','👨','👩','👦','👧','🧔','👱','🙋','😎','🤩','🦸','🧙‍♀️','🧑‍💻','🧑‍🎨','🧑‍💼','🐱']
 
 const pageIn = {
   initial: { opacity: 0, y: 20 },
@@ -11,10 +9,9 @@ const pageIn = {
 }
 
 export default function RegisterPage({ onShowLogin }) {
-  const { signUp } = useAuth()
-  const [step, setStep]         = useState(0) // 0=datos, 1=cuenta
+  const { signUp, updateAvatar } = useAuth()
+  const [step, setStep]         = useState(0)
   const [nombre, setNombre]     = useState('')
-  const [emoji, setEmoji]       = useState('🧑')
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [showPwd, setShowPwd]   = useState(false)
@@ -22,13 +19,30 @@ export default function RegisterPage({ onShowLogin }) {
   const [error, setError]       = useState(null)
   const [success, setSuccess]   = useState(false)
 
+  // Foto de perfil
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(null)
+  const fileInputRef = useRef(null)
+
+  const handlePhotoClick = () => fileInputRef.current?.click()
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) return
+    if (file.size > 5 * 1024 * 1024) return
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+    e.target.value = ''
+  }
+
   const handleRegister = async (e) => {
     e?.preventDefault()
     if (!email.trim() || password.length < 6) return
     setLoading(true)
     setError(null)
     try {
-      await signUp({ email, password, nombre, emoji })
+      await signUp({ email, password, nombre, emoji: '🧑' })
       setSuccess(true)
     } catch (err) {
       const msg = err.message || 'Error al crear cuenta'
@@ -57,6 +71,11 @@ export default function RegisterPage({ onShowLogin }) {
           <p style={{ fontSize: '15px', color: 'var(--text-muted)', lineHeight: 1.6, maxWidth: '300px' }}>
             Te enviamos un email de confirmación a <strong style={{ color: 'var(--text-primary)' }}>{email}</strong>. Confírmalo y luego inicia sesión.
           </p>
+          {photoFile && (
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '10px' }}>
+              Puedes agregar tu foto desde Ajustes después de iniciar sesión.
+            </p>
+          )}
         </div>
         <motion.button
           whileTap={{ scale: 0.97 }}
@@ -81,69 +100,74 @@ export default function RegisterPage({ onShowLogin }) {
       overflowY: 'auto',
     }}>
       <AnimatePresence mode="wait">
-        {step === 0 ? (
-          <motion.div key="step0" {...pageIn} style={{ width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+        {/* ── Paso 0: foto + nombre ── */}
+        {step === 0 && (
+          <motion.div key="step0" {...pageIn} style={{ width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
             {/* Header */}
             <div style={{ textAlign: 'center' }}>
               <div style={{
-                width: '72px', height: '72px', borderRadius: '22px',
-                background: 'linear-gradient(135deg, var(--accent), #5B4ED6)',
+                width: '64px', height: '64px', borderRadius: '20px',
+                background: 'linear-gradient(135deg, rgba(124,111,247,0.18), rgba(91,78,214,0.12))',
+                border: '1px solid rgba(124,111,247,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 16px',
-                boxShadow: '0 8px 32px rgba(124,111,247,0.35)',
               }}>
-                <span style={{ fontSize: '36px' }}>💜</span>
+                <img src="/favicon.svg" alt="Disegnarus" style={{ width: '38px', height: '38px' }} />
               </div>
               <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '22px', color: 'var(--text-primary)', marginBottom: '4px' }}>
                 Crear cuenta
               </h1>
-              <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Elige tu avatar y nombre</p>
+              <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Agrega tu nombre y una foto opcional</p>
             </div>
 
-            {/* Avatar preview */}
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                width: '80px', height: '80px', borderRadius: '50%',
-                background: 'var(--accent-dim)', border: '2px solid var(--accent-border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '44px', margin: '0 auto',
-              }}>
-                {emoji}
-              </div>
-            </div>
-
-            {/* Emoji picker */}
-            <div>
-              <label className="input-label" style={{ marginBottom: '8px' }}>Avatar</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {AVATARS.map(av => (
-                  <motion.button
-                    key={av}
-                    whileTap={{ scale: 0.88 }}
-                    onClick={() => setEmoji(av)}
-                    style={{
-                      width: '44px', height: '44px', fontSize: '24px',
-                      borderRadius: 'var(--radius-md)',
-                      border: `1.5px solid ${emoji === av ? 'var(--accent-border)' : 'var(--border)'}`,
-                      background: emoji === av ? 'var(--accent-dim)' : 'var(--bg-surface-2)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {av}
-                  </motion.button>
-                ))}
-              </div>
+            {/* Foto de perfil */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handlePhotoChange}
+              />
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={handlePhotoClick}
+                style={{
+                  width: '96px', height: '96px', borderRadius: '50%',
+                  background: photoPreview ? 'transparent' : 'var(--bg-surface-2)',
+                  border: `2px ${photoPreview ? 'solid var(--accent-border)' : 'dashed rgba(255,255,255,0.15)'}`,
+                  overflow: 'hidden', cursor: 'pointer', padding: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  position: 'relative', flexShrink: 0,
+                }}
+              >
+                {photoPreview
+                  ? <img src={photoPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <User size={38} color="rgba(255,255,255,0.18)" strokeWidth={1.4} />
+                }
+                <div style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0,
+                  height: '30px', background: 'rgba(0,0,0,0.55)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Camera size={14} color="white" />
+                </div>
+              </motion.button>
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.28)' }}>
+                {photoPreview ? 'Toca para cambiar' : 'Foto de perfil (opcional)'}
+              </p>
             </div>
 
             {/* Nombre */}
             <div>
-              <label className="input-label">Nombre</label>
+              <label className="input-label">Tu nombre</label>
               <input
                 className="input-field"
                 value={nombre}
                 onChange={e => setNombre(e.target.value)}
-                placeholder="Tu nombre..."
+                placeholder="¿Cómo te llamas?"
                 autoFocus
                 onKeyDown={e => e.key === 'Enter' && nombre.trim() && setStep(1)}
               />
@@ -175,10 +199,12 @@ export default function RegisterPage({ onShowLogin }) {
               </motion.button>
             </p>
           </motion.div>
-        ) : (
+        )}
+
+        {/* ── Paso 1: email + contraseña ── */}
+        {step === 1 && (
           <motion.div key="step1" {...pageIn} style={{ width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-            {/* Header */}
             <div>
               <motion.button
                 whileTap={{ scale: 0.95 }}
@@ -187,8 +213,18 @@ export default function RegisterPage({ onShowLogin }) {
               >
                 ← Volver
               </motion.button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
-                <span style={{ fontSize: '32px' }}>{emoji}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '4px' }}>
+                {/* Mini avatar preview */}
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '50%', flexShrink: 0,
+                  background: 'var(--accent-dim)', border: '1.5px solid var(--accent-border)',
+                  overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {photoPreview
+                    ? <img src={photoPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <User size={22} color="var(--accent)" strokeWidth={1.8} />
+                  }
+                </div>
                 <div>
                   <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '20px', color: 'var(--text-primary)' }}>
                     Hola, {nombre}
@@ -270,6 +306,7 @@ export default function RegisterPage({ onShowLogin }) {
             </form>
           </motion.div>
         )}
+
       </AnimatePresence>
 
       <p style={{ position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom) + 16px)', fontSize: '11px', color: 'var(--text-muted)' }}>

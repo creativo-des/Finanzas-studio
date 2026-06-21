@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Home, User, Building2, CreditCard, MoreHorizontal, Menu, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { User } from 'lucide-react'
 
 const PERSONAL_TABS = [
   { to: '/',         icon: Home,           label: 'Inicio'   },
@@ -22,6 +23,8 @@ export default function TabBar() {
   const location = useLocation()
   const { mode, switchMode } = useAuth()
   const tabs = mode === 'estudio' ? ESTUDIO_TABS : PERSONAL_TABS
+
+  const { mode, switchMode, activeProfile } = useAuth()
 
   const [visible, setVisible] = useState(false)
 
@@ -108,23 +111,40 @@ export default function TabBar() {
               paddingRight: '28px',
             }}
           >
-            {/* Brand */}
+            {/* Brand / perfil usuario */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.04, duration: 0.2 }}
-              style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '44px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '44px' }}
             >
-              <img src="/favicon.svg" alt="Disegnarus" style={{ width: '34px', height: '34px' }} />
-              <p style={{
-                fontFamily: 'Space Grotesk, sans-serif',
-                fontWeight: 700,
-                fontSize: '20px',
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.01em',
+              {/* Avatar */}
+              <div style={{
+                width: '46px', height: '46px', borderRadius: '50%', flexShrink: 0,
+                background: 'var(--accent-dim)', border: '1.5px solid var(--accent-border)',
+                overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                Disegnarus
-              </p>
+                {activeProfile?.avatar_url
+                  ? <img src={activeProfile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : activeProfile?.emoji && activeProfile.emoji !== '🧑'
+                    ? <span style={{ fontSize: '24px' }}>{activeProfile.emoji}</span>
+                    : <User size={22} color="var(--accent)" strokeWidth={1.8} />
+                }
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <p style={{
+                  fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700,
+                  fontSize: '18px', color: 'var(--text-primary)', letterSpacing: '-0.01em',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                }}>
+                  {activeProfile?.nombre || 'Usuario'}
+                </p>
+                {activeProfile?.email && (
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.32)', marginTop: '1px' }}>
+                    {activeProfile.email}
+                  </p>
+                )}
+              </div>
             </motion.div>
 
             {/* Ítems de navegación */}
