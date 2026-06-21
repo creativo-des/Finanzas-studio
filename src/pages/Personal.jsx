@@ -17,12 +17,11 @@ import TransactionList from '../components/personal/TransactionList'
 import AddTransactionSheet from '../components/personal/AddTransactionSheet'
 import EditBudgetSheet from '../components/personal/EditBudgetSheet'
 import CotizacionesTab from '../components/personal/CotizacionesTab'
-import CategoryGrid from '../components/dashboard/CategoryGrid'
 import PaymentMethodsBreakdown from '../components/dashboard/PaymentMethodsBreakdown'
 import { useToast } from '../hooks/useToast'
 import { useHaptic } from '../hooks/useHaptic'
 
-const TABS = ['Gastos', 'Ingresos', 'Proyectos', 'Categorías', 'Presupuesto']
+const TABS = ['Gastos', 'Ingresos', 'Proyectos', 'Presupuesto']
 
 const NOMBRES_CAT = {
   casa: 'Casa', comida: 'Comida', familia: 'Familia', transporte: 'Transporte',
@@ -239,13 +238,8 @@ export default function Personal() {
         </div>
       )}
 
-      {/* ── Categorías ───────────────────────────────────── */}
-      {tab === 3 && (
-        <CategoryGrid categorias={state.personal.presupuesto.categorias} transacciones={transacciones} />
-      )}
-
       {/* ── Presupuesto ──────────────────────────────────── */}
-      {tab === 4 && (
+      {tab === 3 && (
         <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
           {/* Alerta déficit presupuesto */}
