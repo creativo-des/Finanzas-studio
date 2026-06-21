@@ -81,15 +81,16 @@ export default function ProfileScreen() {
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
               <div style={{
                 width: '72px', height: '72px', borderRadius: '22px',
-                background: 'linear-gradient(135deg, var(--accent), #5B4ED6)',
+                background: 'linear-gradient(135deg, rgba(124,111,247,0.18), rgba(91,78,214,0.12))',
+                border: '1px solid rgba(124,111,247,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 16px',
                 boxShadow: '0 8px 32px rgba(124,111,247,0.35)',
               }}>
-                <span style={{ fontSize: '36px' }}>💜</span>
+                <img src="/favicon.svg" alt="App Finanzas" style={{ width: '44px', height: '44px' }} />
               </div>
               <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '24px', color: 'var(--text-primary)', marginBottom: '6px' }}>
-                Finanzas Disegnarus
+                App Finanzas
               </h1>
               <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
                 {profiles.length === 0 ? 'Crea tu primer perfil para empezar' : '¿Quién eres?'}
