@@ -7,8 +7,10 @@ export default function PageHeader({ title, subtitle, showBell = false, alertCou
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'space-between',
-      padding: '0 20px 12px',
       paddingTop: 'calc(env(safe-area-inset-top) + 14px)',
+      paddingRight: '20px',
+      paddingBottom: '12px',
+      paddingLeft: '68px',
       flexShrink: 0,
       gap: '10px',
     }}>
