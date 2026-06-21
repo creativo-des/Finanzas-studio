@@ -133,17 +133,17 @@ export default function TabBar() {
                       whileTap={{ scale: 0.80 }}
                       transition={{ duration: 0.1 }}
                       style={{
-                        height: '44px',
+                        height: '56px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        borderRadius: '10px',
+                        borderRadius: '12px',
                         background: isActive ? 'rgba(124,111,247,0.22)' : 'transparent',
                         transition: 'background 0.2s',
                       }}
                     >
                       <Icon
-                        size={21}
+                        size={26}
                         color={isActive ? 'var(--accent)' : 'rgba(255,255,255,0.45)'}
                         strokeWidth={isActive ? 2.2 : 1.6}
                       />
