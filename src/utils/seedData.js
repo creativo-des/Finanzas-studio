@@ -55,6 +55,8 @@ export const seedData = {
 
   suscripciones: [],
 
+  cotizaciones: [],
+
   config: {
     moneda: 'COP',
     nombre: 'Usuario',

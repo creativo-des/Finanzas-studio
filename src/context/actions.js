@@ -61,6 +61,15 @@ export const ACTIONS = {
   DELETE_SUSCRIPCION: 'DELETE_SUSCRIPCION',
   TOGGLE_SUSCRIPCION: 'TOGGLE_SUSCRIPCION',
 
+  // Cotizaciones (proyectos de compra)
+  ADD_COTIZACION: 'ADD_COTIZACION',
+  UPDATE_COTIZACION: 'UPDATE_COTIZACION',
+  DELETE_COTIZACION: 'DELETE_COTIZACION',
+  ADD_ITEM_COT: 'ADD_ITEM_COT',
+  UPDATE_ITEM_COT: 'UPDATE_ITEM_COT',
+  DELETE_ITEM_COT: 'DELETE_ITEM_COT',
+  ABONAR_COTIZACION: 'ABONAR_COTIZACION',
+
   // Import
   IMPORT_DATA: 'IMPORT_DATA',
 }
@@ -471,6 +480,53 @@ export function reducer(state, action) {
       return {
         ...state,
         suscripciones: state.suscripciones.map(s => s.id === action.id ? { ...s, activa: !s.activa } : s),
+      }
+
+    case ACTIONS.ADD_COTIZACION:
+      return { ...state, cotizaciones: [...(state.cotizaciones || []), { id: uid(), ahorroActual: 0, items: [], ...action.payload }] }
+
+    case ACTIONS.UPDATE_COTIZACION:
+      return { ...state, cotizaciones: (state.cotizaciones || []).map(c => c.id === action.id ? { ...c, ...action.payload } : c) }
+
+    case ACTIONS.DELETE_COTIZACION:
+      return { ...state, cotizaciones: (state.cotizaciones || []).filter(c => c.id !== action.id) }
+
+    case ACTIONS.ADD_ITEM_COT:
+      return {
+        ...state,
+        cotizaciones: (state.cotizaciones || []).map(c =>
+          c.id === action.cotizacionId
+            ? { ...c, items: [...c.items, { id: uid(), ...action.payload }] }
+            : c
+        ),
+      }
+
+    case ACTIONS.UPDATE_ITEM_COT:
+      return {
+        ...state,
+        cotizaciones: (state.cotizaciones || []).map(c =>
+          c.id === action.cotizacionId
+            ? { ...c, items: c.items.map(i => i.id === action.id ? { ...i, ...action.payload } : i) }
+            : c
+        ),
+      }
+
+    case ACTIONS.DELETE_ITEM_COT:
+      return {
+        ...state,
+        cotizaciones: (state.cotizaciones || []).map(c =>
+          c.id === action.cotizacionId
+            ? { ...c, items: c.items.filter(i => i.id !== action.id) }
+            : c
+        ),
+      }
+
+    case ACTIONS.ABONAR_COTIZACION:
+      return {
+        ...state,
+        cotizaciones: (state.cotizaciones || []).map(c =>
+          c.id === action.id ? { ...c, ahorroActual: (c.ahorroActual || 0) + action.monto } : c
+        ),
       }
 
     case ACTIONS.IMPORT_DATA:

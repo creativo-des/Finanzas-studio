@@ -242,6 +242,7 @@ html, body, #root {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
+  padding-top: 20px;
   /* nav flotante: 44px alto + 6px padding*2 + 20px offset + 20px espacio extra */
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }

@@ -16,12 +16,13 @@ import Toast from '../components/ui/Toast'
 import TransactionList from '../components/personal/TransactionList'
 import AddTransactionSheet from '../components/personal/AddTransactionSheet'
 import EditBudgetSheet from '../components/personal/EditBudgetSheet'
+import CotizacionesTab from '../components/personal/CotizacionesTab'
 import CategoryGrid from '../components/dashboard/CategoryGrid'
 import PaymentMethodsBreakdown from '../components/dashboard/PaymentMethodsBreakdown'
 import { useToast } from '../hooks/useToast'
 import { useHaptic } from '../hooks/useHaptic'
 
-const TABS = ['Gastos', 'Categorías', 'Presupuesto', 'Ingresos']
+const TABS = ['Gastos', 'Categorías', 'Presupuesto', 'Ingresos', 'Proyectos']
 
 const NOMBRES_CAT = {
   casa: 'Casa', comida: 'Comida', familia: 'Familia', transporte: 'Transporte',
@@ -406,6 +407,9 @@ export default function Personal() {
           </motion.button>
         </div>
       )}
+
+      {/* ── Proyectos ────────────────────────────────────── */}
+      {tab === 4 && <CotizacionesTab />}
 
       {/* ── Ingresos ─────────────────────────────────────── */}
       {tab === 3 && (
