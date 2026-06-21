@@ -70,13 +70,13 @@ function CloudLoadingScreen() {
         transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
         style={{
           width: '72px', height: '72px', borderRadius: '22px',
-          background: 'linear-gradient(135deg, var(--accent), #5B4ED6)',
+          background: 'linear-gradient(135deg, rgba(124,111,247,0.18), rgba(91,78,214,0.12))',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '34px',
-          boxShadow: '0 12px 40px rgba(124,111,247,0.4)',
+          boxShadow: '0 12px 40px rgba(124,111,247,0.35)',
+          border: '1px solid rgba(124,111,247,0.25)',
         }}
       >
-        💜
+        <img src="/favicon.svg" alt="Disegnarus" style={{ width: '44px', height: '44px' }} />
       </motion.div>
       <div style={{ display: 'flex', gap: '6px' }}>
         {[0, 1, 2].map(i => (
@@ -112,12 +112,13 @@ function AuthGate() {
           transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
           style={{
             width: '72px', height: '72px', borderRadius: '22px',
-            background: 'linear-gradient(135deg, var(--accent), #5B4ED6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '34px',
-            boxShadow: '0 12px 40px rgba(124,111,247,0.4)',
+            background: 'linear-gradient(135deg, rgba(124,111,247,0.18), rgba(91,78,214,0.12))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 12px 40px rgba(124,111,247,0.35)',
+            border: '1px solid rgba(124,111,247,0.25)',
           }}
         >
-          💜
+          <img src="/favicon.svg" alt="Disegnarus" style={{ width: '44px', height: '44px' }} />
         </motion.div>
         <div style={{ display: 'flex', gap: '6px' }}>
           {[0, 1, 2].map(i => (
