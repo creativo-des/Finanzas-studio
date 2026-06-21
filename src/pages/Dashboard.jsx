@@ -16,41 +16,6 @@ import PaymentMethodsBreakdown from '../components/dashboard/PaymentMethodsBreak
 import UpcomingSubscriptions from '../components/dashboard/UpcomingSubscriptions'
 import ProgressBar from '../components/ui/ProgressBar'
 
-function ModeSwitcher() {
-  const { mode, switchMode } = useAuth()
-  return (
-    <div style={{
-      display: 'flex',
-      background: 'var(--bg-surface-2)',
-      borderRadius: 'var(--radius-full)',
-      padding: '3px',
-      gap: '2px',
-    }}>
-      {['personal', 'estudio'].map(m => (
-        <motion.button
-          key={m}
-          whileTap={{ scale: 0.94 }}
-          onClick={() => switchMode(m)}
-          style={{
-            padding: '5px 12px',
-            borderRadius: 'var(--radius-full)',
-            border: 'none',
-            background: mode === m ? 'var(--accent)' : 'transparent',
-            color: mode === m ? 'white' : 'var(--text-muted)',
-            fontSize: '11px',
-            fontWeight: mode === m ? 600 : 400,
-            fontFamily: 'Inter, sans-serif',
-            cursor: 'pointer',
-            textTransform: 'capitalize',
-            transition: 'background 0.2s, color 0.2s',
-          }}
-        >
-          {m === 'personal' ? '🏠' : '💼'} {m.charAt(0).toUpperCase() + m.slice(1)}
-        </motion.button>
-      ))}
-    </div>
-  )
-}
 
 export default function Dashboard() {
   const { state, dispatch } = useFinance()
@@ -88,7 +53,6 @@ export default function Dashboard() {
         <PageHeader
           title="Disegnarus Studio"
           subtitle={`Finanzas · ${nombreMes(mesActual)} ${anioActual}`}
-          rightContent={<ModeSwitcher />}
         />
       }>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingTop: '4px', paddingBottom: '8px' }}>
@@ -245,7 +209,6 @@ export default function Dashboard() {
           <PageHeader
             subtitle={`${nombreMes(mesActual)} ${anioActual}`}
             title={`${saludo}, ${nombre} 👋`}
-            rightContent={<ModeSwitcher />}
           />
         }
       >
