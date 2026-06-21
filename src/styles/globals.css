@@ -183,8 +183,9 @@ html, body, #root {
   /* Hide the floating mobile tab bar on desktop */
   .mobile-tabbar { display: none !important; }
 
-  /* Less bottom padding on desktop (no floating nav) */
+  /* Desktop: no floating nav, reset padding to normal */
   .page-scroll {
+    padding-top: 20px;
     padding-bottom: 48px;
     scrollbar-width: thin;
     scrollbar-color: var(--bg-surface-3) transparent;
@@ -242,9 +243,9 @@ html, body, #root {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  padding-top: 20px;
-  /* nav flotante: 44px alto + 6px padding*2 + 20px offset + 20px espacio extra */
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  /* top nav: safe-area + 14px offset + 56px pill + 6px gap + 22px toggle + 22px respiro */
+  padding-top: calc(env(safe-area-inset-top) + 120px);
+  padding-bottom: 32px;
 }
 
 .page-scroll::-webkit-scrollbar { display: none; }
