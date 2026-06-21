@@ -22,7 +22,7 @@ import PaymentMethodsBreakdown from '../components/dashboard/PaymentMethodsBreak
 import { useToast } from '../hooks/useToast'
 import { useHaptic } from '../hooks/useHaptic'
 
-const TABS = ['Gastos', 'Categorías', 'Presupuesto', 'Ingresos', 'Proyectos']
+const TABS = ['Gastos', 'Ingresos', 'Proyectos', 'Categorías', 'Presupuesto']
 
 const NOMBRES_CAT = {
   casa: 'Casa', comida: 'Comida', familia: 'Familia', transporte: 'Transporte',
@@ -240,12 +240,12 @@ export default function Personal() {
       )}
 
       {/* ── Categorías ───────────────────────────────────── */}
-      {tab === 1 && (
+      {tab === 3 && (
         <CategoryGrid categorias={state.personal.presupuesto.categorias} transacciones={transacciones} />
       )}
 
       {/* ── Presupuesto ──────────────────────────────────── */}
-      {tab === 2 && (
+      {tab === 4 && (
         <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
           {/* Alerta déficit presupuesto */}
@@ -409,10 +409,10 @@ export default function Personal() {
       )}
 
       {/* ── Proyectos ────────────────────────────────────── */}
-      {tab === 4 && <CotizacionesTab />}
+      {tab === 2 && <CotizacionesTab />}
 
       {/* ── Ingresos ─────────────────────────────────────── */}
-      {tab === 3 && (
+      {tab === 1 && (
         <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
           <div style={{
