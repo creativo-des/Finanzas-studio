@@ -243,8 +243,8 @@ html, body, #root {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  /* top nav: safe-area + 14px offset + 56px pill + 6px gap + 22px toggle + 22px respiro */
-  padding-top: calc(env(safe-area-inset-top) + 120px);
+  /* toggle izquierdo: safe-area + 14px offset + 44px botón + 16px respiro */
+  padding-top: calc(env(safe-area-inset-top) + 74px);
   padding-bottom: 32px;
 }
 
