@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion'
 import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'

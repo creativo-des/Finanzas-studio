@@ -136,7 +136,7 @@ export default function ModeSelector() {
         }}
       >
         <LogOut size={14} />
-        Cambiar perfil
+        Cerrar sesión
       </motion.button>
 
     </div>

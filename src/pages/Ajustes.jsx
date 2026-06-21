@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronRight, Download, Upload, RefreshCw, ShieldCheck, LogOut, Camera } from 'lucide-react'
+import { ChevronRight, Download, Upload, RefreshCw, Trash2, ShieldCheck, LogOut, Camera } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'
+import { seedData } from '../utils/seedData'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import Toast from '../components/ui/Toast'
@@ -140,6 +141,20 @@ export default function Ajustes() {
     dispatch({ type: ACTIONS.SET_META_AHORRO, valor: val / 100 })
   }
 
+  const handleFullReset = () => {
+    if (!window.confirm('¿Borrar TODOS los datos y empezar desde cero? Esta acción no se puede deshacer.')) return
+    const fresh = {
+      ...seedData,
+      config: {
+        ...seedData.config,
+        anioActual: String(new Date().getFullYear()),
+        onboardingDone: false,
+        tourDone: false,
+      },
+    }
+    dispatch({ type: ACTIONS.IMPORT_DATA, data: fresh })
+  }
+
   const handleSignOut = async () => {
     if (!window.confirm('¿Cerrar sesión?')) return
     await signOut()
@@ -266,6 +281,8 @@ export default function Ajustes() {
           <Row label="Importar datos" icon={Upload} onClick={handleImport} />
           <Divider />
           <Row label="Resetear mes actual" icon={RefreshCw} onClick={handleReset} color="var(--warning)" />
+          <Divider />
+          <Row label="Borrar todos los datos" icon={Trash2} onClick={handleFullReset} color="var(--expense)" />
         </SectionCard>
 
         {/* Info */}
