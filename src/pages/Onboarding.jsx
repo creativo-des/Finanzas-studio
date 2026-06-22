@@ -6,7 +6,7 @@ import { ACTIONS } from '../context/actions'
 import AmountInput from '../components/ui/AmountInput'
 import { nombreMes } from '../utils/dateHelpers'
 
-const uid = () => Math.random().toString(36).slice(2, 9)
+const uid = () => crypto.randomUUID()
 
 const CARD_COLORS = ['#7C6FF7','#4F9EF8','#2DD4A4','#F5B731','#F06B6B','#C084FC','#FB923C','#34D399']
 const SAVINGS_OPTIONS = [10, 15, 20, 25, 30]

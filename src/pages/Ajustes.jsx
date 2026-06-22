@@ -122,7 +122,7 @@ export default function Ajustes() {
             ...state.personal.gastosMensuales,
             [anioActual]: {
               ...state.personal.gastosMensuales?.[anioActual],
-              [mesActual]: { transacciones: [], totalGastado: 0 },
+              [mesActual]: { transacciones: [] },
             },
           },
         },

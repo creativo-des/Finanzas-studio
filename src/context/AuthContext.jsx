@@ -11,8 +11,9 @@ export function AuthProvider({ children }) {
   const [mode, setMode]             = useState(null)
   const [ready, setReady]           = useState(false)
 
-  const loadMode = useCallback((uid) => {
-    setMode(localStorage.getItem(modeKey(uid)) || null)
+  const loadMode = useCallback((u) => {
+    const m = u?.user_metadata?.mode || localStorage.getItem(modeKey(u?.id)) || null
+    setMode(m)
   }, [])
 
   const checkMFA = useCallback(async () => {
@@ -30,7 +31,7 @@ export function AuthProvider({ children }) {
       if (session?.user) {
         setUser(session.user)
         const needsMFA = await checkMFA()
-        if (!needsMFA) loadMode(session.user.id)
+        if (!needsMFA) loadMode(session.user)
       }
       setReady(true)
     })
@@ -38,8 +39,13 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setUser(session.user)
+        // USER_UPDATED fires when metadata changes (e.g. mode switch) — skip MFA recheck
+        if (event === 'USER_UPDATED') {
+          loadMode(session.user)
+          return
+        }
         const needsMFA = await checkMFA()
-        if (!needsMFA) loadMode(session.user.id)
+        if (!needsMFA) loadMode(session.user)
       } else {
         setUser(null)
         setMfaPending(false)
@@ -88,7 +94,7 @@ export function AuthProvider({ children }) {
     })
     if (vErr) throw vErr
     setMfaPending(false)
-    if (user) loadMode(user.id)
+    if (user) loadMode(user)
   }
 
   const enrollMFA = async () => {
@@ -141,7 +147,11 @@ export function AuthProvider({ children }) {
 
   const switchMode = (m) => {
     setMode(m)
-    if (user) localStorage.setItem(modeKey(user.id), m)
+    if (user) {
+      localStorage.setItem(modeKey(user.id), m)
+      supabase.auth.updateUser({ data: { ...user.user_metadata, mode: m } })
+        .then(({ data }) => { if (data?.user) setUser(data.user) })
+    }
   }
 
   const activeProfile = user

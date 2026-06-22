@@ -18,6 +18,7 @@ export const ACTIONS = {
 
   // Personal - transacciones
   ADD_TRANSACCION: 'ADD_TRANSACCION',
+  UPDATE_TRANSACCION: 'UPDATE_TRANSACCION',
   DELETE_TRANSACCION: 'DELETE_TRANSACCION',
 
   // Personal - tarjetas
@@ -74,7 +75,7 @@ export const ACTIONS = {
   IMPORT_DATA: 'IMPORT_DATA',
 }
 
-const uid = () => Math.random().toString(36).slice(2, 9)
+const uid = () => crypto.randomUUID()
 
 export function reducer(state, action) {
   switch (action.type) {
@@ -248,9 +249,26 @@ export function reducer(state, action) {
 
     case ACTIONS.ADD_TRANSACCION: {
       const { mes, anio } = action
-      const prev = state.personal.gastosMensuales?.[anio]?.[mes] || { transacciones: [], totalGastado: 0 }
+      const prev = state.personal.gastosMensuales?.[anio]?.[mes] || { transacciones: [] }
       const nuevaTransaccion = { id: uid(), fecha: new Date().toISOString(), ...action.payload }
-      const nuevasTransacciones = [nuevaTransaccion, ...prev.transacciones]
+      return {
+        ...state,
+        personal: {
+          ...state.personal,
+          gastosMensuales: {
+            ...state.personal.gastosMensuales,
+            [anio]: {
+              ...state.personal.gastosMensuales?.[anio],
+              [mes]: { transacciones: [nuevaTransaccion, ...prev.transacciones] },
+            },
+          },
+        },
+      }
+    }
+
+    case ACTIONS.UPDATE_TRANSACCION: {
+      const { mes, anio } = action
+      const prev = state.personal.gastosMensuales?.[anio]?.[mes] || { transacciones: [] }
       return {
         ...state,
         personal: {
@@ -260,8 +278,7 @@ export function reducer(state, action) {
             [anio]: {
               ...state.personal.gastosMensuales?.[anio],
               [mes]: {
-                transacciones: nuevasTransacciones,
-                totalGastado: nuevasTransacciones.reduce((s, t) => s + t.monto, 0),
+                transacciones: prev.transacciones.map(t => t.id === action.id ? { ...t, ...action.payload } : t),
               },
             },
           },
@@ -272,7 +289,6 @@ export function reducer(state, action) {
     case ACTIONS.DELETE_TRANSACCION: {
       const { mes, anio } = action
       const prev = state.personal.gastosMensuales?.[anio]?.[mes] || { transacciones: [] }
-      const filtradas = prev.transacciones.filter(t => t.id !== action.id)
       return {
         ...state,
         personal: {
@@ -281,10 +297,7 @@ export function reducer(state, action) {
             ...state.personal.gastosMensuales,
             [anio]: {
               ...state.personal.gastosMensuales?.[anio],
-              [mes]: {
-                transacciones: filtradas,
-                totalGastado: filtradas.reduce((s, t) => s + t.monto, 0),
-              },
+              [mes]: { transacciones: prev.transacciones.filter(t => t.id !== action.id) },
             },
           },
         },

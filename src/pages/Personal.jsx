@@ -55,6 +55,9 @@ export default function Personal() {
   const [confirmTx, setConfirmTx]   = useState(null)
   const [confirmIng, setConfirmIng] = useState(null)
 
+  // Edit transaction
+  const [editTx, setEditTx] = useState(null)
+
   // Income sheet (monthly)
   const [ingresoSheet, setIngresoSheet] = useState(false)
   const [editIngreso, setEditIngreso]   = useState(null)
@@ -86,7 +89,7 @@ export default function Personal() {
       dispatch({ type: ACTIONS.UPDATE_CATEGORIA, key: editCatKey, nombre: catNombre.trim(), emoji: catEmoji })
       showToast({ message: 'Categoría actualizada ✓' })
     } else {
-      const key = `cat_${Math.random().toString(36).slice(2, 7)}`
+      const key = `cat_${crypto.randomUUID().slice(0, 8)}`
       dispatch({ type: ACTIONS.ADD_CATEGORIA, key, nombre: catNombre.trim(), emoji: catEmoji })
       showToast({ message: 'Categoría creada ✓' })
     }
@@ -218,6 +221,7 @@ export default function Personal() {
             transacciones={transacciones}
             onDelete={handleDelete}
             onRequestDelete={(tx) => setConfirmTx(tx)}
+            onEdit={(tx) => setEditTx(tx)}
           />
           <PaymentMethodsBreakdown transacciones={transacciones} />
           <div style={{ padding: '0 20px' }}>
@@ -491,6 +495,16 @@ export default function Personal() {
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
         onSuccess={() => showToast({ message: 'Gasto registrado ✓', type: 'success' })}
+        mes={mesActual}
+        anio={anioActual}
+      />
+
+      <AddTransactionSheet
+        open={!!editTx}
+        onClose={() => setEditTx(null)}
+        onSuccess={() => showToast({ message: 'Gasto actualizado ✓', type: 'success' })}
+        onDelete={(tx) => { setEditTx(null); setConfirmTx(tx) }}
+        transaction={editTx}
         mes={mesActual}
         anio={anioActual}
       />

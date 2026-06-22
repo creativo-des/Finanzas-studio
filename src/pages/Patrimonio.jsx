@@ -21,7 +21,7 @@ export default function Patrimonio() {
   const haptic = useHaptic()
   const activos = state.personal.patrimonio.activos
   const deudas  = state.personal.deudas
-  const { totalActivos, totalPasivos, patrimoniNeto } = calcTotalPatrimonio(activos, deudas)
+  const { totalActivos, totalPasivos, patrimonioNeto } = calcTotalPatrimonio(activos, deudas)
 
   // Tendencia mes a mes
   const [tendencia, setTendencia] = useState(null)
@@ -37,17 +37,17 @@ export default function Patrimonio() {
       const hist = raw ? JSON.parse(raw) : {}
 
       if (hist[prevKey] !== undefined) {
-        const diff = patrimoniNeto - hist[prevKey]
+        const diff = patrimonioNeto - hist[prevKey]
         setTendencia({ diferencia: diff, prevValor: hist[prevKey] })
       }
 
       if (hist[mesKey] === undefined) {
-        hist[mesKey] = patrimoniNeto
+        hist[mesKey] = patrimonioNeto
         const sorted = Object.entries(hist).sort(([a], [b]) => a.localeCompare(b)).slice(-24)
         localStorage.setItem('df-patrimonio-hist', JSON.stringify(Object.fromEntries(sorted)))
       }
     } catch { /* storage full */ }
-  }, [patrimoniNeto])
+  }, [patrimonioNeto])
 
   // Add
   const [addOpen, setAddOpen]   = useState(false)
@@ -109,9 +109,9 @@ export default function Patrimonio() {
           <p className="label-uppercase" style={{ marginBottom: '4px', color: 'var(--warning)' }}>Patrimonio neto</p>
           <p style={{
             fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '36px',
-            color: patrimoniNeto >= 0 ? 'var(--income)' : 'var(--expense)', marginBottom: '8px',
+            color: patrimonioNeto >= 0 ? 'var(--income)' : 'var(--expense)', marginBottom: '8px',
           }}>
-            {formatCOP(patrimoniNeto)}
+            {formatCOP(patrimonioNeto)}
           </p>
 
           {tendencia ? (

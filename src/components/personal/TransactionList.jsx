@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import TransactionItem from './TransactionItem'
 import { formatFecha } from '../../utils/dateHelpers'
 
-export default function TransactionList({ transacciones, onDelete, onRequestDelete }) {
+export default function TransactionList({ transacciones, onDelete, onRequestDelete, onEdit }) {
   const grouped = useMemo(() => {
     const groups = {}
     for (const tx of transacciones) {
@@ -44,7 +44,7 @@ export default function TransactionList({ transacciones, onDelete, onRequestDele
           }}>
             {txs.map((tx, i) => (
               <div key={tx.id}>
-                <TransactionItem tx={tx} onDelete={onDelete} onRequestDelete={onRequestDelete} />
+                <TransactionItem tx={tx} onDelete={onDelete} onRequestDelete={onRequestDelete} onEdit={onEdit} />
                 {i < txs.length - 1 && <div className="divider" style={{ margin: '0 20px' }} />}
               </div>
             ))}

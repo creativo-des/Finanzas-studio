@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeftRight, CreditCard, Banknote, Wallet } from 'lucide-react'
 import Sheet from '../ui/Sheet'
@@ -29,15 +29,27 @@ const METODOS = [
   { key: 'Efectivo',        label: 'Efectivo',    icon: Banknote,       color: '#F5B731' },
 ]
 
-export default function AddTransactionSheet({ open, onClose, onSuccess, mes, anio }) {
+export default function AddTransactionSheet({ open, onClose, onSuccess, mes, anio, transaction, onDelete }) {
   const { state, dispatch } = useFinance()
   const haptic = useHaptic()
+  const isEdit = !!transaction
 
-  const [monto, setMonto]       = useState(0)
-  const [concepto, setConcepto] = useState('')
+  const [monto, setMonto]         = useState(0)
+  const [concepto, setConcepto]   = useState('')
   const [categoria, setCategoria] = useState('otros')
-  const [metodo, setMetodo]     = useState('Transferencia')
+  const [metodo, setMetodo]       = useState('Transferencia')
   const [tarjetaId, setTarjetaId] = useState('')
+
+  // Populate fields when entering edit mode
+  useEffect(() => {
+    if (transaction) {
+      setMonto(transaction.monto)
+      setConcepto(transaction.concepto || '')
+      setCategoria(transaction.categoria || 'otros')
+      setMetodo(transaction.metodo || 'Transferencia')
+      setTarjetaId(transaction.tarjetaId || '')
+    }
+  }, [transaction])
 
   const tarjetas = state.personal.tarjetas
   const tarjetasCreditoFiltradas = tarjetas.filter(t => t.tipo === 'credito')
@@ -50,7 +62,7 @@ export default function AddTransactionSheet({ open, onClose, onSuccess, mes, ani
     setMetodo('Transferencia'); setTarjetaId('')
   }
 
-  const handleClose = () => { reset(); onClose() }
+  const handleClose = () => { if (!isEdit) reset(); onClose() }
 
   const handleMetodoChange = (m) => {
     setMetodo(m)
@@ -59,26 +71,36 @@ export default function AddTransactionSheet({ open, onClose, onSuccess, mes, ani
 
   const handleSubmit = () => {
     if (!monto || monto <= 0) return
-    dispatch({
-      type: ACTIONS.ADD_TRANSACCION,
-      mes,
-      anio,
-      payload: { concepto: concepto || 'Sin concepto', categoria, monto, metodo, tarjetaId },
-    })
+    if (isEdit) {
+      dispatch({
+        type: ACTIONS.UPDATE_TRANSACCION,
+        id: transaction.id,
+        mes,
+        anio,
+        payload: { concepto: concepto || 'Sin concepto', categoria, monto, metodo, tarjetaId },
+      })
+    } else {
+      dispatch({
+        type: ACTIONS.ADD_TRANSACCION,
+        mes,
+        anio,
+        payload: { concepto: concepto || 'Sin concepto', categoria, monto, metodo, tarjetaId },
+      })
+    }
     haptic.success()
-    reset()
+    if (!isEdit) reset()
     onSuccess?.()
     onClose()
   }
 
   return (
-    <Sheet open={open} onClose={handleClose} title="Registrar gasto">
+    <Sheet open={open} onClose={handleClose} title={isEdit ? 'Editar gasto' : 'Registrar gasto'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
         {/* Monto */}
         <div>
           <label className="input-label">Monto</label>
-          <AmountInput value={monto} onChange={setMonto} autoFocus={open} />
+          <AmountInput value={monto} onChange={setMonto} autoFocus={open && !isEdit} />
         </div>
 
         {/* Concepto */}
@@ -119,7 +141,7 @@ export default function AddTransactionSheet({ open, onClose, onSuccess, mes, ani
           </div>
         </div>
 
-        {/* Método de pago — 4 opciones con ícono */}
+        {/* Método de pago */}
         <div>
           <label className="input-label">Medio de pago</label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -160,7 +182,7 @@ export default function AddTransactionSheet({ open, onClose, onSuccess, mes, ani
           </div>
         </div>
 
-        {/* Tarjeta específica (solo si es Crédito o Débito) */}
+        {/* Tarjeta específica */}
         {mostrarTarjetas && tarjetasFiltradas.length > 0 && (
           <div>
             <label className="input-label">
@@ -188,7 +210,6 @@ export default function AddTransactionSheet({ open, onClose, onSuccess, mes, ani
           </div>
         )}
 
-        {/* Sin tarjetas del tipo seleccionado */}
         {mostrarTarjetas && tarjetasFiltradas.length === 0 && (
           <div style={{
             background: 'var(--warning-dim)', border: '1px solid var(--warning)',
@@ -201,20 +222,51 @@ export default function AddTransactionSheet({ open, onClose, onSuccess, mes, ani
           </div>
         )}
 
-        {/* Botón confirmar */}
-        <motion.button
-          whileTap={{ scale: 0.96 }}
-          onClick={handleSubmit}
-          style={{
-            width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
-            background: monto > 0 ? 'var(--accent)' : 'var(--bg-surface-3)',
-            color: monto > 0 ? 'white' : 'var(--text-muted)',
-            fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px',
-            cursor: monto > 0 ? 'pointer' : 'not-allowed', transition: 'background 0.2s',
-          }}
-        >
-          Registrar gasto
-        </motion.button>
+        {/* Botones */}
+        {isEdit ? (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <motion.button
+              whileTap={{ scale: 0.96 }}
+              onClick={() => onDelete?.(transaction)}
+              style={{
+                flex: '0 0 auto', padding: '16px 20px', borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--expense-dim)', background: 'var(--expense-dim)',
+                color: 'var(--expense)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Eliminar
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.96 }}
+              onClick={handleSubmit}
+              disabled={!monto || monto <= 0}
+              style={{
+                flex: 1, padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
+                background: monto > 0 ? 'var(--accent)' : 'var(--bg-surface-3)',
+                color: monto > 0 ? 'white' : 'var(--text-muted)',
+                fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px',
+                cursor: monto > 0 ? 'pointer' : 'not-allowed',
+              }}
+            >
+              Guardar cambios
+            </motion.button>
+          </div>
+        ) : (
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={handleSubmit}
+            style={{
+              width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
+              background: monto > 0 ? 'var(--accent)' : 'var(--bg-surface-3)',
+              color: monto > 0 ? 'white' : 'var(--text-muted)',
+              fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px',
+              cursor: monto > 0 ? 'pointer' : 'not-allowed', transition: 'background 0.2s',
+            }}
+          >
+            Registrar gasto
+          </motion.button>
+        )}
 
       </div>
     </Sheet>

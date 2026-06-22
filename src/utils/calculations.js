@@ -40,7 +40,7 @@ export const calcTotalDeudas = (deudas) =>
 export const calcTotalPatrimonio = (activos, deudas) => {
   const totalActivos = activos.reduce((s, a) => s + a.valorActual, 0)
   const totalPasivos = calcTotalDeudas(deudas)
-  return { totalActivos, totalPasivos, patrimoniNeto: totalActivos - totalPasivos }
+  return { totalActivos, totalPasivos, patrimonioNeto: totalActivos - totalPasivos }
 }
 
 export const calcSuscripcionesMes = (suscripciones) =>
