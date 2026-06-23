@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Home, User, Building2, CreditCard, MoreHorizontal, Menu, X } from 'lucide-react'
+import { Home, User, Building2, CreditCard, MoreHorizontal, Menu, X, Settings, LogOut } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const PERSONAL_TABS = [
@@ -20,7 +20,19 @@ const ESTUDIO_TABS = [
 
 export default function TabBar() {
   const location = useLocation()
-  const { mode, switchMode, activeProfile } = useAuth()
+  const navigate = useNavigate()
+  const { mode, switchMode, activeProfile, signOut } = useAuth()
+
+  const handleSignOut = async () => {
+    if (!window.confirm('¿Cerrar sesión?')) return
+    close()
+    await signOut()
+  }
+
+  const handleAjustes = () => {
+    close()
+    navigate('/ajustes')
+  }
   const tabs = mode === 'estudio' ? ESTUDIO_TABS : PERSONAL_TABS
 
   const [visible, setVisible] = useState(false)
@@ -200,6 +212,47 @@ export default function TabBar() {
                 )
               })}
             </nav>
+
+            {/* Ajustes y cerrar sesión */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.07 + tabs.length * 0.055, type: 'spring', stiffness: 400, damping: 30 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}
+            >
+              <motion.div whileTap={{ scale: 0.97 }} onClick={handleAjustes} style={{
+                display: 'flex', alignItems: 'center', gap: '18px',
+                padding: '15px 18px', borderRadius: '16px',
+                background: location.pathname === '/ajustes' ? 'rgba(124,111,247,0.13)' : 'transparent',
+                border: `1px solid ${location.pathname === '/ajustes' ? 'rgba(124,111,247,0.28)' : 'transparent'}`,
+                cursor: 'pointer', transition: 'background 0.2s',
+              }}>
+                <Settings size={26} color={location.pathname === '/ajustes' ? 'var(--accent)' : 'rgba(255,255,255,0.35)'} strokeWidth={location.pathname === '/ajustes' ? 2.2 : 1.6} />
+                <span style={{
+                  fontFamily: 'Space Grotesk, sans-serif',
+                  fontWeight: location.pathname === '/ajustes' ? 700 : 400,
+                  fontSize: '22px',
+                  color: location.pathname === '/ajustes' ? 'var(--text-primary)' : 'rgba(255,255,255,0.38)',
+                  letterSpacing: '-0.01em',
+                }}>Ajustes</span>
+                {location.pathname === '/ajustes' && (
+                  <div style={{ marginLeft: 'auto', width: '7px', height: '7px', borderRadius: '50%', background: 'var(--accent)' }} />
+                )}
+              </motion.div>
+
+              <motion.div whileTap={{ scale: 0.97 }} onClick={handleSignOut} style={{
+                display: 'flex', alignItems: 'center', gap: '18px',
+                padding: '15px 18px', borderRadius: '16px',
+                background: 'transparent', border: '1px solid transparent',
+                cursor: 'pointer', transition: 'background 0.2s',
+              }}>
+                <LogOut size={26} color="var(--expense)" strokeWidth={1.6} />
+                <span style={{
+                  fontFamily: 'Space Grotesk, sans-serif', fontWeight: 400,
+                  fontSize: '22px', color: 'var(--expense)', letterSpacing: '-0.01em',
+                }}>Cerrar sesión</span>
+              </motion.div>
+            </motion.div>
 
             {/* Separador */}
             <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '20px 0' }} />
