@@ -48,16 +48,19 @@ function SyncSection({ estudio, dispatch }) {
   const [lastSync, setLastSync]         = useState(() => localStorage.getItem(LAST_SYNC_KEY))
   const [generating, setGenerating]     = useState(false)
   const [importing, setImporting]       = useState(false)
+  const [generateError, setGenerateError] = useState(false)
 
   const handleGenerar = async () => {
     setGenerating(true)
+    setGenerateError(false)
     const code = generateCode()
     const { error } = await supabase
       .from('sync_codes')
-      .upsert({ code, data: estudio, created_at: new Date().toISOString() })
+      .upsert({ code, data: estudio, created_at: new Date().toISOString() }, { onConflict: 'code' })
     setGenerating(false)
     if (error) {
       console.error('[Sync] Error guardando código:', error)
+      setGenerateError(true)
       return
     }
     setMiCodigo(code)
@@ -212,6 +215,19 @@ function SyncSection({ estudio, dispatch }) {
             }
           </motion.button>
         )}
+
+        <AnimatePresence>
+          {generateError && (
+            <motion.div
+              key="gen-err"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <AlertCircle size={13} color="#EF4444" />
+              <p style={{ fontSize: '12px', color: '#EF4444' }}>Error al guardar el código. Revisa tu conexión.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── BLOQUE: Importar código ── */}
