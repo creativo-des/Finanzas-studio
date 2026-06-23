@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Target, TrendingUp, Settings, ChevronRight, DollarSign,
+  TrendingUp, Settings, ChevronRight,
   LogOut, Copy, CheckCircle, AlertCircle, RefreshCw, Download, CreditCard, Loader,
 } from 'lucide-react'
 import PageLayout from '../components/layout/PageLayout'
@@ -309,11 +309,9 @@ function SyncSection({ estudio, dispatch }) {
 
 // ── Opciones de navegación ───────────────────────────────────────────
 const opciones = [
-  { label: 'Suscripciones',     icon: CreditCard, to: '/suscripciones', color: '#7C6FF7' },
-  { label: 'Deudas y créditos', icon: DollarSign, to: '/deudas',        color: '#C084FC' },
-  { label: 'Metas de ahorro',   icon: Target,     to: '/metas',         color: '#2DD4A4' },
-  { label: 'Patrimonio neto',   icon: TrendingUp, to: '/patrimonio',    color: '#F5B731' },
-  { label: 'Ajustes',           icon: Settings,   to: '/ajustes',       color: '#9898B8' },
+  { label: 'Suscripciones',   icon: CreditCard, to: '/suscripciones', color: '#7C6FF7' },
+  { label: 'Patrimonio neto', icon: TrendingUp, to: '/patrimonio',    color: '#F5B731' },
+  { label: 'Ajustes',         icon: Settings,   to: '/ajustes',       color: '#9898B8' },
 ]
 
 // ── Página ───────────────────────────────────────────────────────────
