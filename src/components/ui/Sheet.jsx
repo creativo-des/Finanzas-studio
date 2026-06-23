@@ -128,10 +128,6 @@ export default function Sheet({ open, onClose, title, children }) {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: '100%', opacity: 0 }}
                 transition={{ type: 'spring', damping: 30, stiffness: 320, mass: 0.8 }}
-                drag="y"
-                dragConstraints={{ top: 0 }}
-                dragElastic={{ top: 0, bottom: 0.4 }}
-                onDragEnd={(_, info) => { if (info.offset.y > 80) onClose() }}
                 style={{
                   width: '100%', maxWidth: '430px',
                   background: 'var(--bg-surface-2)',
@@ -142,12 +138,23 @@ export default function Sheet({ open, onClose, title, children }) {
                   pointerEvents: 'all',
                 }}
               >
-                {/* Drag handle */}
-                <div style={{
-                  width: '36px', height: '4px',
-                  background: 'var(--border-strong)', borderRadius: '2px',
-                  margin: '12px auto 0', flexShrink: 0,
-                }} />
+                {/* Drag handle — solo esta zona arrastra el sheet */}
+                <motion.div
+                  drag="y"
+                  dragConstraints={{ top: 0 }}
+                  dragElastic={{ top: 0, bottom: 0.4 }}
+                  onDragEnd={(_, info) => { if (info.offset.y > 80) onClose() }}
+                  style={{
+                    padding: '12px 0 4px', flexShrink: 0,
+                    display: 'flex', justifyContent: 'center',
+                    cursor: 'grab', touchAction: 'none',
+                  }}
+                >
+                  <div style={{
+                    width: '36px', height: '4px',
+                    background: 'var(--border-strong)', borderRadius: '2px',
+                  }} />
+                </motion.div>
 
                 {/* Header */}
                 {title && (

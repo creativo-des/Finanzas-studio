@@ -1,8 +1,9 @@
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle, AlertCircle } from 'lucide-react'
 
 export default function Toast({ toast }) {
-  return (
+  return createPortal(
     <AnimatePresence>
       {toast && (
         <motion.div
@@ -39,6 +40,7 @@ export default function Toast({ toast }) {
           </span>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
