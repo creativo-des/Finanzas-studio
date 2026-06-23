@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, User, Building2, CreditCard, TrendingDown,
-  Target, Briefcase, Repeat2, Settings, LogOut,
+  Target, Briefcase, Repeat2, Settings, LogOut, RefreshCw,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useFinance } from '../../context/FinanceContext'
@@ -26,6 +26,7 @@ const NAV_ESTUDIO = [
   { to: '/metas',         icon: Target,       label: 'Metas'         },
   { to: '/patrimonio',    icon: Briefcase,    label: 'Patrimonio'    },
   { to: '/suscripciones', icon: Repeat2,      label: 'Suscripciones' },
+  { to: '/mas',           icon: RefreshCw,    label: 'Sincronizar'   },
   { to: '/ajustes',       icon: Settings,     label: 'Ajustes'       },
 ]
 
