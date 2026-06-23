@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, User, Building2, CreditCard, TrendingDown,
   Target, Briefcase, Repeat2, Settings, LogOut,
@@ -31,7 +31,7 @@ const NAV_ESTUDIO = [
 
 export default function Sidebar() {
   const location   = useLocation()
-  const { mode, user, signOut } = useAuth()
+  const { mode, switchMode, user, signOut } = useAuth()
   const { state }  = useFinance()
   const links      = mode === 'estudio' ? NAV_ESTUDIO : NAV_PERSONAL
   const appName    = state.config.nombre || 'Finanzas'
@@ -55,14 +55,71 @@ export default function Sidebar() {
             <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)', lineHeight: 1 }}>
               {appName}
             </p>
-            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-              {mode === 'estudio' ? 'Modo Estudio' : 'Modo Personal'}
-            </p>
           </div>
         </div>
       </div>
 
       <div style={{ height: '1px', background: 'var(--border)', margin: '0 16px' }} />
+
+      {/* Mode switcher */}
+      <div style={{ padding: '12px 10px' }}>
+        <div style={{
+          display: 'flex',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid var(--border)',
+          borderRadius: '12px',
+          padding: '3px',
+        }}>
+          {[
+            { key: 'personal', emoji: '🏠', label: 'Personal' },
+            { key: 'estudio',  emoji: '💼', label: 'Estudio'  },
+          ].map(m => {
+            const active = mode === m.key
+            return (
+              <motion.button
+                key={m.key}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => switchMode(m.key)}
+                style={{
+                  flex: 1,
+                  position: 'relative',
+                  padding: '8px 6px',
+                  borderRadius: '9px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                  fontSize: '13px',
+                  fontWeight: active ? 600 : 400,
+                  fontFamily: 'Space Grotesk, sans-serif',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '5px',
+                  zIndex: 1,
+                }}
+              >
+                {active && (
+                  <motion.div
+                    layoutId="sidebar-mode-pill"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      borderRadius: '9px',
+                      background: 'var(--accent-dim)',
+                      border: '1px solid var(--accent-border)',
+                      zIndex: -1,
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <span style={{ fontSize: '14px' }}>{m.emoji}</span>
+                {m.label}
+              </motion.button>
+            )
+          })}
+        </div>
+      </div>
 
       {/* Navigation */}
       <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto' }}>
