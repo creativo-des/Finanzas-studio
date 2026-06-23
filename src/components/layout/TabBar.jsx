@@ -221,7 +221,13 @@ export default function TabBar() {
               }}>
                 Perfil activo
               </p>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{
+                display: 'flex',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '18px',
+                padding: '4px',
+              }}>
                 {[
                   { key: 'personal', emoji: '🏠', label: 'Personal' },
                   { key: 'estudio',  emoji: '💼', label: 'Estudio'  },
@@ -230,27 +236,42 @@ export default function TabBar() {
                   return (
                     <motion.button
                       key={m.key}
-                      whileTap={{ scale: 0.94 }}
+                      whileTap={{ scale: 0.97 }}
                       onClick={() => { switchMode(m.key); close() }}
                       style={{
                         flex: 1,
-                        padding: '13px 12px',
+                        position: 'relative',
+                        padding: '14px 12px',
                         borderRadius: '14px',
-                        border: `1px solid ${active ? 'rgba(124,111,247,0.35)' : 'rgba(255,255,255,0.08)'}`,
-                        background: active ? 'rgba(124,111,247,0.16)' : 'rgba(255,255,255,0.03)',
-                        color: active ? 'var(--accent)' : 'rgba(255,255,255,0.32)',
-                        fontSize: '14px',
-                        fontWeight: active ? 600 : 400,
-                        fontFamily: 'Inter, sans-serif',
+                        border: 'none',
+                        background: 'transparent',
+                        color: active ? 'white' : 'rgba(255,255,255,0.32)',
+                        fontSize: '15px',
+                        fontWeight: active ? 700 : 400,
+                        fontFamily: 'Space Grotesk, sans-serif',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '8px',
-                        transition: 'background 0.2s, color 0.2s',
+                        zIndex: 1,
                       }}
                     >
-                      <span style={{ fontSize: '18px' }}>{m.emoji}</span>
+                      {active && (
+                        <motion.div
+                          layoutId="mode-pill"
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            borderRadius: '14px',
+                            background: 'rgba(124,111,247,0.22)',
+                            border: '1px solid rgba(124,111,247,0.4)',
+                            zIndex: -1,
+                          }}
+                          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                        />
+                      )}
+                      <span style={{ fontSize: '20px' }}>{m.emoji}</span>
                       {m.label}
                     </motion.button>
                   )
