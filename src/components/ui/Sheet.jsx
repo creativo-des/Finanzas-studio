@@ -8,12 +8,17 @@ export default function Sheet({ open, onClose, title, children }) {
   const [vpHeight, setVpHeight] = useState(
     () => window.visualViewport?.height ?? window.innerHeight
   )
+  const [keyboardOffset, setKeyboardOffset] = useState(0)
 
   useEffect(() => {
     if (!open || isDesktop) return
     const vv = window.visualViewport
     if (!vv) return
-    const update = () => setVpHeight(vv.height)
+    const update = () => {
+      const kb = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0))
+      setVpHeight(vv.height)
+      setKeyboardOffset(kb)
+    }
     update()
     vv.addEventListener('resize', update)
     vv.addEventListener('scroll', update)
@@ -22,6 +27,11 @@ export default function Sheet({ open, onClose, title, children }) {
       vv.removeEventListener('scroll', update)
     }
   }, [open, isDesktop])
+
+  // Reset keyboard offset when sheet closes
+  useEffect(() => {
+    if (!open) setKeyboardOffset(0)
+  }, [open])
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
@@ -43,6 +53,8 @@ export default function Sheet({ open, onClose, title, children }) {
       <X size={16} color="var(--text-muted)" />
     </motion.button>
   )
+
+  const withKeyboard = keyboardOffset > 0
 
   return (
     <AnimatePresence>
@@ -117,11 +129,14 @@ export default function Sheet({ open, onClose, title, children }) {
               </motion.div>
             </div>
           ) : (
-            /* ── Mobile: bottom sheet ───────────────────────── */
+            /* ── Mobile: bottom sheet que sube con el teclado ── */
             <div style={{
-              position: 'fixed', bottom: 0, left: 0, right: 0,
+              position: 'fixed',
+              left: 0, right: 0,
+              bottom: keyboardOffset,
               display: 'flex', justifyContent: 'center',
               zIndex: 101, pointerEvents: 'none',
+              transition: 'bottom 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
             }}>
               <motion.div
                 initial={{ y: '100%', opacity: 0.8 }}
@@ -131,36 +146,45 @@ export default function Sheet({ open, onClose, title, children }) {
                 style={{
                   width: '100%', maxWidth: '430px',
                   background: 'var(--bg-surface-2)',
-                  borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
+                  borderRadius: withKeyboard
+                    ? 'var(--radius-xl)'
+                    : 'var(--radius-xl) var(--radius-xl) 0 0',
                   borderTop: '1px solid var(--border-strong)',
-                  maxHeight: `${vpHeight * 0.92}px`,
+                  maxHeight: withKeyboard
+                    ? `${vpHeight - 8}px`
+                    : `${vpHeight * 0.92}px`,
                   display: 'flex', flexDirection: 'column',
                   pointerEvents: 'all',
+                  transition: 'border-radius 0.28s ease, max-height 0.28s ease',
                 }}
               >
                 {/* Drag handle — solo esta zona arrastra el sheet */}
-                <motion.div
-                  drag="y"
-                  dragConstraints={{ top: 0 }}
-                  dragElastic={{ top: 0, bottom: 0.4 }}
-                  onDragEnd={(_, info) => { if (info.offset.y > 80) onClose() }}
-                  style={{
-                    padding: '12px 0 4px', flexShrink: 0,
-                    display: 'flex', justifyContent: 'center',
-                    cursor: 'grab', touchAction: 'none',
-                  }}
-                >
-                  <div style={{
-                    width: '36px', height: '4px',
-                    background: 'var(--border-strong)', borderRadius: '2px',
-                  }} />
-                </motion.div>
+                {!withKeyboard && (
+                  <motion.div
+                    drag="y"
+                    dragConstraints={{ top: 0 }}
+                    dragElastic={{ top: 0, bottom: 0.4 }}
+                    onDragEnd={(_, info) => { if (info.offset.y > 80) onClose() }}
+                    style={{
+                      padding: '12px 0 4px', flexShrink: 0,
+                      display: 'flex', justifyContent: 'center',
+                      cursor: 'grab', touchAction: 'none',
+                    }}
+                  >
+                    <div style={{
+                      width: '36px', height: '4px',
+                      background: 'var(--border-strong)', borderRadius: '2px',
+                    }} />
+                  </motion.div>
+                )}
 
                 {/* Header */}
                 {title && (
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '16px 20px 0', flexShrink: 0,
+                    padding: withKeyboard ? '14px 20px' : '16px 20px 0',
+                    borderBottom: withKeyboard ? '1px solid var(--border)' : 'none',
+                    flexShrink: 0,
                   }}>
                     <h2 style={{
                       fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600,
@@ -178,7 +202,9 @@ export default function Sheet({ open, onClose, title, children }) {
                   WebkitOverflowScrolling: 'touch',
                   overscrollBehaviorY: 'contain',
                   padding: '20px',
-                  paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
+                  paddingBottom: withKeyboard
+                    ? '20px'
+                    : 'calc(20px + env(safe-area-inset-bottom))',
                 }}>
                   {children}
                 </div>
