@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronRight, Download, Upload, RefreshCw, Trash2, ShieldCheck, LogOut, Camera } from 'lucide-react'
+import { ChevronRight, Download, Upload, RefreshCw, Trash2, ShieldCheck, LogOut, Camera, Cloud, CloudOff } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'
@@ -42,7 +42,7 @@ const Divider = () => <div style={{ height: '1px', background: 'var(--border)', 
 
 export default function Ajustes() {
   const navigate = useNavigate()
-  const { state, dispatch } = useFinance()
+  const { state, dispatch, cloudSyncOk } = useFinance()
   const { activeProfile, signOut, updateAvatar } = useAuth()
   const { toast, showToast } = useToast()
   const [nombre, setNombre]           = useState(state.config.nombre)
@@ -235,6 +235,29 @@ export default function Ajustes() {
           </div>
           <Divider />
           <Row label="Moneda" value="COP" />
+        </SectionCard>
+
+        {/* Sincronización */}
+        <p className="label-uppercase" style={{ marginBottom: '8px' }}>Datos en la nube</p>
+        <SectionCard>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {cloudSyncOk
+                ? <Cloud size={18} color="#2DD4A4" />
+                : <CloudOff size={18} color="#EF4444" />
+              }
+              <div>
+                <p style={{ fontSize: '15px', color: 'var(--text-primary)' }}>
+                  {cloudSyncOk ? 'Sincronizado con la nube' : 'Error de sincronización'}
+                </p>
+                {!cloudSyncOk && (
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Revisa tu conexión o cierra sesión y vuelve a entrar
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </SectionCard>
 
         {/* Seguridad */}

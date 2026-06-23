@@ -8,7 +8,7 @@ const FinanceContext = createContext(null)
 const makeKey = (profileId) => `df-data-${profileId}`
 const currentYear = String(new Date().getFullYear())
 
-const saveToCloud = (profileId, state) =>
+const saveToCloud = (profileId, state, onError) =>
   supabase
     .from('finance_data')
     .upsert(
@@ -16,7 +16,10 @@ const saveToCloud = (profileId, state) =>
       { onConflict: 'user_id' }
     )
     .then(({ error }) => {
-      if (error) console.error('[FinanceContext] cloud save error:', error)
+      if (error) {
+        console.error('[FinanceContext] cloud save error:', error.message, error.code, error.details)
+        onError?.()
+      }
     })
 
 const mergeWithSeed = (parsed) => {
@@ -43,9 +46,14 @@ const loadLocal = (profileId) => {
 export function FinanceProvider({ children, profileId }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => loadLocal(profileId))
   const [cloudLoading, setCloudLoading] = useState(true)
+  const [cloudSyncOk, setCloudSyncOk]   = useState(true)
   const syncTimer    = useRef(null)
   const cloudReady   = useRef(false)
   const pendingSave  = useRef(null)
+  const latestState  = useRef(state)
+
+  // Keep latestState ref in sync — needed by cloud load callback which captures stale closure
+  useEffect(() => { latestState.current = state })
 
   // On mount: load cloud data (authoritative source)
   useEffect(() => {
@@ -59,7 +67,7 @@ export function FinanceProvider({ children, profileId }) {
       .limit(1)
       .then(({ data: rows, error }) => {
         if (error) {
-          console.error('[FinanceContext] cloud load error:', error)
+          console.error('[FinanceContext] cloud load error:', error.message, error.code)
         }
         const row = rows?.[0]
         if (row?.data) {
@@ -72,6 +80,10 @@ export function FinanceProvider({ children, profileId }) {
         }
         cloudReady.current = true
         setCloudLoading(false)
+        // Bootstrap: if no cloud data found and no network error, push local data up now
+        if (!error && !row?.data) {
+          saveToCloud(profileId, latestState.current, () => setCloudSyncOk(false))
+        }
       })
   }, [profileId])
 
@@ -87,7 +99,7 @@ export function FinanceProvider({ children, profileId }) {
     clearTimeout(syncTimer.current)
     syncTimer.current = setTimeout(() => {
       pendingSave.current = null
-      saveToCloud(profileId, state)
+      saveToCloud(profileId, state, () => setCloudSyncOk(false))
     }, 800)
 
     return () => clearTimeout(syncTimer.current)
@@ -98,7 +110,7 @@ export function FinanceProvider({ children, profileId }) {
     const flush = () => {
       if (document.visibilityState === 'hidden' && cloudReady.current && pendingSave.current) {
         clearTimeout(syncTimer.current)
-        saveToCloud(profileId, pendingSave.current)
+        saveToCloud(profileId, pendingSave.current, () => setCloudSyncOk(false))
         pendingSave.current = null
       }
     }
@@ -106,7 +118,7 @@ export function FinanceProvider({ children, profileId }) {
     return () => document.removeEventListener('visibilitychange', flush)
   }, [profileId])
 
-  const value = useMemo(() => ({ state, dispatch, cloudLoading }), [state, cloudLoading])
+  const value = useMemo(() => ({ state, dispatch, cloudLoading, cloudSyncOk }), [state, cloudLoading, cloudSyncOk])
 
   return (
     <FinanceContext.Provider value={value}>
