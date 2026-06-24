@@ -20,6 +20,7 @@ const EMOJIS = ['🎬','🎵','📺','🎮','📰','☁️','🛒','💼','🏋�
 
 export default function Suscripciones() {
   const { state, dispatch } = useFinance()
+  const { mode } = useAuth()
   const { toast, showToast } = useToast()
   const haptic = useHaptic()
 
@@ -31,13 +32,12 @@ export default function Suscripciones() {
   const [emoji, setEmoji]           = useState('📺')
   const [monto, setMonto]           = useState(0)
   const [diaPago, setDiaPago]       = useState(1)
-  const [categoria, setCategoria]   = useState('personal')
   const [frecuencia, setFrecuencia] = useState('mensual')
 
-  const totalMes  = calcSuscripcionesMes(state.suscripciones)
+  const totalMes  = calcSuscripcionesMes(suscripcionesModo)
   const totalAnio = totalMes * 12
 
-  const proximas7dias = state.suscripciones
+  const proximas7dias = suscripcionesModo
     .filter(s => s.activa)
     .map(s => ({ ...s, dias: diasHastaFecha(s.diaPago) }))
     .filter(s => s.dias >= 0 && s.dias <= 7)
@@ -56,7 +56,7 @@ export default function Suscripciones() {
 
   const openAdd = () => {
     setEditSub(null)
-    setNombre(''); setEmoji('📺'); setMonto(0); setDiaPago(1); setCategoria('personal'); setFrecuencia('mensual')
+    setNombre(''); setEmoji('📺'); setMonto(0); setDiaPago(1); setFrecuencia('mensual')
     setSheetOpen(true)
   }
 
@@ -66,7 +66,6 @@ export default function Suscripciones() {
     setEmoji(sub.emoji)
     setMonto(sub.monto)
     setDiaPago(sub.diaPago)
-    setCategoria(sub.categoria)
     setFrecuencia(sub.frecuencia)
     setSheetOpen(true)
   }
@@ -74,7 +73,7 @@ export default function Suscripciones() {
   const handleSave = () => {
     if (!nombre || !monto) return
     const dia = Math.min(31, Math.max(1, Number(diaPago)))
-    const payload = { nombre, emoji, monto, diaPago: dia, categoria, frecuencia, moneda: 'COP' }
+    const payload = { nombre, emoji, monto, diaPago: dia, categoria: mode, frecuencia, moneda: 'COP' }
 
     if (editSub) {
       dispatch({ type: ACTIONS.UPDATE_SUSCRIPCION, id: editSub.id, payload })
@@ -88,8 +87,8 @@ export default function Suscripciones() {
     setSheetOpen(false)
   }
 
-  const personales = state.suscripciones.filter(s => s.categoria === 'personal')
-  const estudio    = state.suscripciones.filter(s => s.categoria === 'estudio')
+  // Solo las suscripciones del modo activo
+  const suscripcionesModo = state.suscripciones.filter(s => s.categoria === mode)
 
   const SubRow = ({ sub, showBorder }) => (
     <div style={{ borderBottom: showBorder ? '1px solid var(--border)' : 'none' }}>
@@ -144,7 +143,7 @@ export default function Suscripciones() {
             </div>
           </div>
           <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--text-muted)' }}>
-            {state.suscripciones.filter(s => s.activa).length} activas de {state.suscripciones.length} total
+            {suscripcionesModo.filter(s => s.activa).length} activas de {suscripcionesModo.length} total
           </p>
         </div>
       </div>
@@ -173,38 +172,22 @@ export default function Suscripciones() {
       )}
 
       {/* Estado vacío */}
-      {state.suscripciones.length === 0 && (
+      {suscripcionesModo.length === 0 && (
         <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
           <p style={{ fontSize: '32px', marginBottom: '8px' }}>📺</p>
           <p>Sin suscripciones registradas</p>
         </div>
       )}
 
-      {/* Lista personales */}
-      {personales.length > 0 && (
+      {/* Lista del modo activo */}
+      {suscripcionesModo.length > 0 && (
         <div style={{ padding: '0 20px 16px' }}>
-          <p className="label-uppercase" style={{ marginBottom: '12px' }}>Personales</p>
           <div style={{
             background: 'var(--bg-surface)', border: '1px solid var(--border)',
             borderRadius: 'var(--radius-lg)', overflow: 'hidden',
           }}>
-            {personales.map((sub, i) => (
-              <SubRow key={sub.id} sub={sub} showBorder={i < personales.length - 1} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Lista estudio */}
-      {estudio.length > 0 && (
-        <div style={{ padding: '0 20px 16px' }}>
-          <p className="label-uppercase" style={{ marginBottom: '12px', color: 'var(--accent)' }}>Estudio</p>
-          <div style={{
-            background: 'var(--bg-surface)', border: '1px solid var(--accent-border)',
-            borderRadius: 'var(--radius-lg)', overflow: 'hidden',
-          }}>
-            {estudio.map((sub, i) => (
-              <SubRow key={sub.id} sub={sub} showBorder={i < estudio.length - 1} />
+            {suscripcionesModo.map((sub, i) => (
+              <SubRow key={sub.id} sub={sub} showBorder={i < suscripcionesModo.length - 1} />
             ))}
           </div>
         </div>
@@ -264,18 +247,9 @@ export default function Suscripciones() {
             <AmountInput value={monto} onChange={setMonto} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div>
-              <label className="input-label">Día de cobro</label>
-              <input className="input-field" type="number" min={1} max={31} value={diaPago} onChange={e => setDiaPago(e.target.value)} />
-            </div>
-            <div>
-              <label className="input-label">Categoría</label>
-              <select className="input-field" value={categoria} onChange={e => setCategoria(e.target.value)}>
-                <option value="personal">Personal</option>
-                <option value="estudio">Estudio</option>
-              </select>
-            </div>
+          <div>
+            <label className="input-label">Día de cobro</label>
+            <input className="input-field" type="number" min={1} max={31} value={diaPago} onChange={e => setDiaPago(e.target.value)} />
           </div>
 
           <div>
