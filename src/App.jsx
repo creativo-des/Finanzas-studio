@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AnimatePresence } from 'framer-motion'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { FinanceProvider, useFinance } from './context/FinanceContext'
+import { ThemeProvider } from './context/ThemeContext'
 import TabBar from './components/layout/TabBar'
 import Sidebar from './components/layout/Sidebar'
 import InstallBanner from './components/ui/InstallBanner'
@@ -102,10 +103,12 @@ function AuthGate() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AuthGate />
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AuthGate />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

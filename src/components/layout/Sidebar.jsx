@@ -2,10 +2,11 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, User, Building2, CreditCard, TrendingDown,
-  Target, Briefcase, Repeat2, Settings, LogOut, RefreshCw,
+  Target, Briefcase, Repeat2, Settings, LogOut, RefreshCw, Sun, Moon,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useFinance } from '../../context/FinanceContext'
+import { useTheme } from '../../context/ThemeContext'
 
 const NAV_PERSONAL = [
   { to: '/',              icon: Home,         label: 'Inicio'        },
@@ -34,6 +35,7 @@ export default function Sidebar() {
   const location   = useLocation()
   const { mode, switchMode, user, signOut } = useAuth()
   const { state }  = useFinance()
+  const { theme, toggleTheme } = useTheme()
   const links      = mode === 'estudio' ? NAV_ESTUDIO : NAV_PERSONAL
   const appName    = state.config.nombre || 'Finanzas'
 
@@ -176,14 +178,24 @@ export default function Sidebar() {
               {user?.email}
             </p>
           </div>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={signOut}
-            title="Cerrar sesión"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--text-muted)', display: 'flex', flexShrink: 0 }}
-          >
-            <LogOut size={16} />
-          </motion.button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={toggleTheme}
+              title={theme === 'light' ? 'Cambiar a oscuro' : 'Cambiar a claro'}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--text-muted)', display: 'flex' }}
+            >
+              {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={signOut}
+              title="Cerrar sesión"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--text-muted)', display: 'flex' }}
+            >
+              <LogOut size={16} />
+            </motion.button>
+          </div>
         </div>
       </div>
     </aside>

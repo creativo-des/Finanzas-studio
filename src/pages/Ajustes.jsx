@@ -1,13 +1,15 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronRight, Download, Upload, RefreshCw, Trash2, ShieldCheck, LogOut, Camera, Cloud, CloudOff } from 'lucide-react'
+import { ChevronRight, Download, Upload, RefreshCw, Trash2, ShieldCheck, LogOut, Camera, Cloud, CloudOff, Sun, Moon } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { ACTIONS } from '../context/actions'
 import { seedData } from '../utils/seedData'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
+import Toggle from '../components/ui/Toggle'
 import Toast from '../components/ui/Toast'
 import { useToast } from '../hooks/useToast'
 
@@ -44,6 +46,7 @@ export default function Ajustes() {
   const navigate = useNavigate()
   const { state, dispatch, cloudSyncOk } = useFinance()
   const { activeProfile, signOut, updateAvatar } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const { toast, showToast } = useToast()
   const [nombre, setNombre]           = useState(state.config.nombre)
   const [metaAhorro, setMetaAhorro]   = useState(Math.round(state.personal.metaAhorro * 100))
@@ -235,6 +238,31 @@ export default function Ajustes() {
           </div>
           <Divider />
           <Row label="Moneda" value="COP" />
+        </SectionCard>
+
+        {/* Apariencia */}
+        <p className="label-uppercase" style={{ marginBottom: '8px' }}>Apariencia</p>
+        <SectionCard>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '16px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {theme === 'light'
+                ? <Sun size={18} color="var(--warning)" />
+                : <Moon size={18} color="var(--accent)" />
+              }
+              <div>
+                <p style={{ fontSize: '15px', color: 'var(--text-primary)' }}>
+                  {theme === 'light' ? 'Modo claro' : 'Modo oscuro'}
+                </p>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  {theme === 'light' ? 'Cambia a oscuro para reducir el brillo' : 'Cambia a claro para mayor visibilidad'}
+                </p>
+              </div>
+            </div>
+            <Toggle checked={theme === 'light'} onChange={toggleTheme} />
+          </div>
         </SectionCard>
 
         {/* Sincronización */}
