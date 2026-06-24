@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Pencil } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
+import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'
 import { calcSuscripcionesMes } from '../utils/calculations'
 import { formatCOP } from '../utils/formatCurrency'
@@ -33,6 +34,9 @@ export default function Suscripciones() {
   const [monto, setMonto]           = useState(0)
   const [diaPago, setDiaPago]       = useState(1)
   const [frecuencia, setFrecuencia] = useState('mensual')
+
+  // Solo las suscripciones del modo activo
+  const suscripcionesModo = state.suscripciones.filter(s => s.categoria === mode)
 
   const totalMes  = calcSuscripcionesMes(suscripcionesModo)
   const totalAnio = totalMes * 12
@@ -86,9 +90,6 @@ export default function Suscripciones() {
     }
     setSheetOpen(false)
   }
-
-  // Solo las suscripciones del modo activo
-  const suscripcionesModo = state.suscripciones.filter(s => s.categoria === mode)
 
   const SubRow = ({ sub, showBorder }) => (
     <div style={{ borderBottom: showBorder ? '1px solid var(--border)' : 'none' }}>
