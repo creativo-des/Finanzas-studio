@@ -85,7 +85,7 @@ function AuthGate() {
   if (!mode)      return <ModeSelector />
 
   return (
-    <FinanceProvider profileId={activeProfile.id}>
+    <FinanceProvider profileId={activeProfile.id} mode={mode}>
       <FinanceGate>
         <div className="app-shell" data-mode={mode}>
           <Sidebar />

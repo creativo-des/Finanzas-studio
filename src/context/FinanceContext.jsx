@@ -5,15 +5,16 @@ import { supabase } from '../lib/supabase'
 
 const FinanceContext = createContext(null)
 
-const makeKey = (profileId) => `df-data-${profileId}`
+// Clave por modo — cada modo tiene su propio espacio en localStorage y en la nube
+const makeKey = (profileId, mode) => `df-data-${profileId}-${mode}`
 const currentYear = String(new Date().getFullYear())
 
-const saveToCloud = (profileId, state, onError) =>
+const saveToCloud = (profileId, mode, state, onError) =>
   supabase
     .from('finance_data')
     .upsert(
-      { user_id: profileId, data: state, updated_at: new Date().toISOString() },
-      { onConflict: 'user_id' }
+      { user_id: profileId, mode, data: state, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,mode' }
     )
     .then(({ error }) => {
       if (error) {
@@ -28,23 +29,27 @@ const mergeWithSeed = (parsed) => {
   const mergedEstudio  = { ...seedData.estudio, ...parsed.estudio }
   if (!mergedEstudio.distribucion) mergedEstudio.distribucion = seedData.estudio.distribucion
   const mergedPersonal = { ...seedData.personal, ...parsed.personal }
-  // Migrate old flat-ingresos → ingresosMensuales (remove legacy field)
   if (!mergedPersonal.ingresosMensuales) mergedPersonal.ingresosMensuales = {}
   delete mergedPersonal.ingresos
   return { ...seedData, ...parsed, personal: mergedPersonal, estudio: mergedEstudio, config: mergedConfig }
 }
 
-const loadLocal = (profileId) => {
+const loadLocal = (profileId, mode) => {
   try {
-    const raw = localStorage.getItem(makeKey(profileId))
-    return mergeWithSeed(raw ? JSON.parse(raw) : null)
+    // Clave nueva (por modo)
+    const raw = localStorage.getItem(makeKey(profileId, mode))
+    if (raw) return mergeWithSeed(JSON.parse(raw))
+
+    // Migración: clave antigua sin modo → sirve de punto de partida para ambos modos
+    const legacy = localStorage.getItem(`df-data-${profileId}`)
+    return mergeWithSeed(legacy ? JSON.parse(legacy) : null)
   } catch {
     return mergeWithSeed(null)
   }
 }
 
-export function FinanceProvider({ children, profileId }) {
-  const [state, dispatch] = useReducer(reducer, undefined, () => loadLocal(profileId))
+export function FinanceProvider({ children, profileId, mode }) {
+  const [state, dispatch] = useReducer(reducer, undefined, () => loadLocal(profileId, mode))
   const [cloudLoading, setCloudLoading] = useState(true)
   const [cloudSyncOk, setCloudSyncOk]   = useState(true)
   const syncTimer    = useRef(null)
@@ -52,10 +57,9 @@ export function FinanceProvider({ children, profileId }) {
   const pendingSave  = useRef(null)
   const latestState  = useRef(state)
 
-  // Keep latestState ref in sync — needed by cloud load callback which captures stale closure
   useEffect(() => { latestState.current = state })
 
-  // On mount: load cloud data (authoritative source)
+  // On mount: carga datos de la nube del modo actual
   useEffect(() => {
     cloudReady.current = false
     setCloudLoading(true)
@@ -63,6 +67,7 @@ export function FinanceProvider({ children, profileId }) {
       .from('finance_data')
       .select('data')
       .eq('user_id', profileId)
+      .eq('mode', mode)
       .order('updated_at', { ascending: false })
       .limit(1)
       .then(({ data: rows, error }) => {
@@ -74,23 +79,22 @@ export function FinanceProvider({ children, profileId }) {
           const merged = mergeWithSeed(row.data)
           const needsReset = !merged.config.dataVersion || merged.config.dataVersion < 2
           const toLoad = needsReset ? mergeWithSeed(null) : merged
-          if (needsReset) localStorage.removeItem(makeKey(profileId))
+          if (needsReset) localStorage.removeItem(makeKey(profileId, mode))
           dispatch({ type: ACTIONS.IMPORT_DATA, data: toLoad })
-          localStorage.setItem(makeKey(profileId), JSON.stringify(toLoad))
+          localStorage.setItem(makeKey(profileId, mode), JSON.stringify(toLoad))
         }
         cloudReady.current = true
         setCloudLoading(false)
-        // Bootstrap: if no cloud data found and no network error, push local data up now
         if (!error && !row?.data) {
-          saveToCloud(profileId, latestState.current, () => setCloudSyncOk(false))
+          saveToCloud(profileId, mode, latestState.current, () => setCloudSyncOk(false))
         }
       })
-  }, [profileId])
+  }, [profileId, mode])
 
-  // Save to localStorage on every state change + debounced cloud save
+  // Guarda en localStorage en cada cambio + debounce a la nube
   useEffect(() => {
     try {
-      localStorage.setItem(makeKey(profileId), JSON.stringify(state))
+      localStorage.setItem(makeKey(profileId, mode), JSON.stringify(state))
     } catch { /* storage full */ }
 
     if (!cloudReady.current) return
@@ -99,24 +103,24 @@ export function FinanceProvider({ children, profileId }) {
     clearTimeout(syncTimer.current)
     syncTimer.current = setTimeout(() => {
       pendingSave.current = null
-      saveToCloud(profileId, state, () => setCloudSyncOk(false))
+      saveToCloud(profileId, mode, state, () => setCloudSyncOk(false))
     }, 800)
 
     return () => clearTimeout(syncTimer.current)
-  }, [state, profileId])
+  }, [state, profileId, mode])
 
-  // Flush pending cloud save when user switches tabs/apps or closes the page
+  // Flush al cambiar de pestaña o cerrar
   useEffect(() => {
     const flush = () => {
       if (document.visibilityState === 'hidden' && cloudReady.current && pendingSave.current) {
         clearTimeout(syncTimer.current)
-        saveToCloud(profileId, pendingSave.current, () => setCloudSyncOk(false))
+        saveToCloud(profileId, mode, pendingSave.current, () => setCloudSyncOk(false))
         pendingSave.current = null
       }
     }
     document.addEventListener('visibilitychange', flush)
     return () => document.removeEventListener('visibilitychange', flush)
-  }, [profileId])
+  }, [profileId, mode])
 
   const value = useMemo(() => ({ state, dispatch, cloudLoading, cloudSyncOk }), [state, cloudLoading, cloudSyncOk])
 
