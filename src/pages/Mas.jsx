@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext'
 import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { supabase } from '../lib/supabase'
+import { useIsDesktop } from '../hooks/useIsDesktop'
 
 // ── Constantes ──────────────────────────────────────────────────────
 const LAST_SYNC_KEY = 'df-last-sync'
@@ -319,48 +320,51 @@ export default function Mas() {
   const navigate = useNavigate()
   const { signOut } = useAuth()
   const { state, dispatch } = useFinance()
+  const isDesktop = useIsDesktop()
 
   return (
     <PageLayout header={<PageHeader title="Más" />}>
       <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-        {/* Opciones */}
-        <div style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)',
-          overflow: 'hidden',
-        }}>
-          {opciones.map((op, i) => {
-            const Icon = op.icon
-            return (
-              <motion.div
-                key={op.to}
-                whileTap={{ backgroundColor: 'var(--bg-surface-2)' }}
-                onClick={() => navigate(op.to)}
-                style={{
-                  display: 'flex', alignItems: 'center', padding: '16px',
-                  cursor: 'pointer',
-                  borderBottom: i < opciones.length - 1 ? '1px solid var(--border)' : 'none',
-                  gap: '14px',
-                }}
-              >
-                <div style={{
-                  width: '40px', height: '40px',
-                  borderRadius: 'var(--radius-md)',
-                  background: op.color + '22',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <Icon size={20} color={op.color} />
-                </div>
-                <span style={{ flex: 1, fontSize: '16px', fontWeight: 500, color: 'var(--text-primary)' }}>
-                  {op.label}
-                </span>
-                <ChevronRight size={18} color="var(--text-muted)" />
-              </motion.div>
-            )
-          })}
-        </div>
+        {/* Opciones — solo en móvil (en escritorio están en el sidebar) */}
+        {!isDesktop && (
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            overflow: 'hidden',
+          }}>
+            {opciones.map((op, i) => {
+              const Icon = op.icon
+              return (
+                <motion.div
+                  key={op.to}
+                  whileTap={{ backgroundColor: 'var(--bg-surface-2)' }}
+                  onClick={() => navigate(op.to)}
+                  style={{
+                    display: 'flex', alignItems: 'center', padding: '16px',
+                    cursor: 'pointer',
+                    borderBottom: i < opciones.length - 1 ? '1px solid var(--border)' : 'none',
+                    gap: '14px',
+                  }}
+                >
+                  <div style={{
+                    width: '40px', height: '40px',
+                    borderRadius: 'var(--radius-md)',
+                    background: op.color + '22',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <Icon size={20} color={op.color} />
+                  </div>
+                  <span style={{ flex: 1, fontSize: '16px', fontWeight: 500, color: 'var(--text-primary)' }}>
+                    {op.label}
+                  </span>
+                  <ChevronRight size={18} color="var(--text-muted)" />
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Sincronizar */}
         <SyncSection estudio={state.estudio} dispatch={dispatch} />
