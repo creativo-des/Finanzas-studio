@@ -196,7 +196,7 @@ export default function Deudas() {
 
   // ── Render ───────────────────────────────────────────────────
   return (
-    <PageLayout header={<PageHeader title="Deudas" />}>
+    <PageLayout header={<PageHeader title="Deudas" subtitle="Créditos y préstamos" />}>
 
       {/* Hero */}
       <div style={{ padding: '0 20px 24px' }}>
@@ -464,7 +464,25 @@ export default function Deudas() {
 
           <div>
             <label className="input-label">Monto del crédito</label>
-            <AmountInput value={dMonto} onChange={v => { setDMonto(v); setAddError('') }} />
+            <div className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 14px' }}>
+              <span style={{ color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '18px', flexShrink: 0 }}>$</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={dMonto > 0 ? dMonto.toLocaleString('es-CO') : ''}
+                onChange={e => {
+                  const raw = e.target.value.replace(/\D/g, '')
+                  setDMonto(raw ? Number(raw) : 0)
+                  setAddError('')
+                }}
+                style={{
+                  flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                  fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700,
+                  fontSize: '20px', color: 'var(--text-primary)', padding: 0, minWidth: 0,
+                }}
+              />
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -527,6 +545,7 @@ export default function Deudas() {
               background: addReady ? 'var(--debt)' : 'var(--bg-surface-3)',
               color: addReady ? 'white' : 'var(--text-muted)',
               fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px', cursor: 'pointer',
+              marginTop: '8px',
             }}
           >
             Registrar deuda

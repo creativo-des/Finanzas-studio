@@ -80,7 +80,7 @@ export default function Metas() {
   const mensualidadPreview = metaTotal > 0 ? Math.round(calcMensualidad(metaTotal, tmv, meses)) : 0
 
   return (
-    <PageLayout header={<PageHeader title="Metas de Ahorro" />}>
+    <PageLayout header={<PageHeader title="Metas de Ahorro" subtitle="Objetivos de ahorro" />}>
 
       {/* Resumen */}
       <div style={{ padding: '0 20px 24px' }}>
