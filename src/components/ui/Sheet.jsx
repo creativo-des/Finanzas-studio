@@ -199,8 +199,7 @@ export default function Sheet({ open, onClose, title, children }) {
                 {/* Body */}
                 <div style={{
                   flex: 1, overflowY: 'auto',
-                  WebkitOverflowScrolling: 'touch',
-                  overscrollBehaviorY: 'contain',
+                  overscrollBehavior: 'contain',
                   padding: '20px',
                   paddingBottom: withKeyboard
                     ? '20px'
