@@ -344,7 +344,7 @@ export default function Deudas() {
               border: '1px dashed var(--expense-border)', background: 'var(--expense-dim)',
               color: 'var(--debt)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', gap: '8px',
+              justifyContent: 'center', gap: '8px', marginTop: '12px',
             }}
           >
             <Plus size={15} /> Registrar deuda
