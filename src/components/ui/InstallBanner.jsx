@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 
@@ -6,23 +7,29 @@ const STORAGE_KEY = 'df-install-dismissed'
 
 export default function InstallBanner() {
   const [show, setShow] = useState(false)
+  const autoTimer = useRef(null)
 
   useEffect(() => {
     const isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent)
     const isStandalone = window.navigator.standalone === true
     const dismissed    = localStorage.getItem(STORAGE_KEY)
     if (isIOS && !isStandalone && !dismissed) {
-      const t = setTimeout(() => setShow(true), 2500)
+      const t = setTimeout(() => {
+        setShow(true)
+        // Auto-cierra después de 5 segundos sin marcar como dismissed permanente
+        autoTimer.current = setTimeout(() => setShow(false), 5000)
+      }, 2500)
       return () => clearTimeout(t)
     }
   }, [])
 
   const dismiss = () => {
+    clearTimeout(autoTimer.current)
     setShow(false)
     localStorage.setItem(STORAGE_KEY, '1')
   }
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {show && (
         <motion.div
@@ -105,6 +112,7 @@ export default function InstallBanner() {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
