@@ -201,8 +201,8 @@ export default function Deudas() {
       {/* Hero */}
       <div style={{ padding: '0 20px 24px' }}>
         <div style={{
-          background: 'linear-gradient(145deg, var(--bg-surface), rgba(192,132,252,0.08))',
-          border: '1px solid rgba(192,132,252,0.25)',
+          background: 'linear-gradient(145deg, var(--bg-surface), var(--debt-dim))',
+          border: '1px solid var(--debt-border)',
           borderRadius: 'var(--radius-2xl)',
           padding: '24px 20px 20px',
         }}>
@@ -226,7 +226,7 @@ export default function Deudas() {
               style={{
                 display: 'flex', alignItems: 'center', gap: '5px',
                 padding: '7px 12px', borderRadius: 'var(--radius-md)',
-                border: '1px solid rgba(192,132,252,0.3)', background: 'rgba(192,132,252,0.1)',
+                border: '1px solid var(--debt-border)', background: 'var(--debt-dim)',
                 color: 'var(--debt)', fontSize: '12px', fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'Inter, sans-serif',
               }}
@@ -328,7 +328,7 @@ export default function Deudas() {
             onClick={openAdd}
             style={{
               width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
-              border: '1px dashed rgba(240,107,107,0.35)', background: 'rgba(240,107,107,0.06)',
+              border: '1px dashed var(--expense-border)', background: 'var(--expense-dim)',
               color: 'var(--debt)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
               justifyContent: 'center', gap: '8px',
@@ -510,7 +510,7 @@ export default function Deudas() {
           {/* Preview cuota */}
           {dMonto > 0 && (
             <div style={{
-              background: 'rgba(192,132,252,0.08)', border: '1px solid rgba(192,132,252,0.2)',
+              background: 'var(--debt-dim)', border: '1px solid var(--debt-border)',
               borderRadius: 'var(--radius-md)', overflow: 'hidden',
             }}>
               {[
@@ -521,7 +521,7 @@ export default function Deudas() {
                 <div key={row.label} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '12px 16px',
-                  borderBottom: i < arr.length - 1 ? '1px solid rgba(192,132,252,0.15)' : 'none',
+                  borderBottom: i < arr.length - 1 ? '1px solid var(--debt-border)' : 'none',
                 }}>
                   <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{row.label}</p>
                   <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '15px', color: row.color }}>

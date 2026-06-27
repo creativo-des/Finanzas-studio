@@ -95,7 +95,7 @@ export default function Sheet({ open, onClose, title, children }) {
                   background: 'var(--bg-surface-2)',
                   borderRadius: 'var(--radius-xl)',
                   border: '1px solid var(--border-strong)',
-                  boxShadow: '0 32px 80px rgba(0,0,0,0.7), 0 4px 20px rgba(0,0,0,0.35)',
+                  boxShadow: 'var(--shadow-lg)',
                   display: 'flex', flexDirection: 'column',
                   overflow: 'hidden',
                   pointerEvents: 'all',

@@ -5,10 +5,10 @@ import { formatCOP } from '../../utils/formatCurrency'
 export default function HeroCard({ disponible, totalIngresos, totalGastos, porcentajeUsado }) {
   return (
     <div style={{
-      background: 'linear-gradient(145deg, #11111C, #16162A)',
-      border: '1px solid rgba(124,111,247,0.2)',
+      background: 'linear-gradient(145deg, var(--bg-surface), var(--bg-surface-2))',
+      border: '1px solid var(--accent-border)',
       borderRadius: 'var(--radius-2xl)',
-      boxShadow: '0 8px 32px rgba(124,111,247,0.15)',
+      boxShadow: 'var(--shadow-accent)',
       padding: '24px 20px 20px',
       margin: '0 20px',
     }}>

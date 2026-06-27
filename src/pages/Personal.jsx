@@ -249,8 +249,8 @@ export default function Personal() {
           {/* Alerta déficit presupuesto */}
           {totales.totalPresupuesto > totales.totalIngresos && totales.totalIngresos > 0 && (
             <div style={{
-              background: 'rgba(240,107,107,0.10)',
-              border: '1px solid rgba(240,107,107,0.35)',
+              background: 'var(--expense-dim)',
+              border: '1px solid var(--expense-border)',
               borderRadius: 'var(--radius-lg)',
               padding: '12px 16px',
               display: 'flex', alignItems: 'center', gap: '10px',
@@ -269,7 +269,7 @@ export default function Personal() {
 
           <div style={{
             background: 'linear-gradient(135deg, var(--bg-surface), rgba(124,111,247,0.06))',
-            border: `1px solid ${totales.totalPresupuesto > totales.totalIngresos && totales.totalIngresos > 0 ? 'rgba(240,107,107,0.3)' : 'var(--accent-border)'}`,
+            border: `1px solid ${totales.totalPresupuesto > totales.totalIngresos && totales.totalIngresos > 0 ? 'var(--expense-border)' : 'var(--accent-border)'}`,
             borderRadius: 'var(--radius-lg)',
             padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
@@ -414,8 +414,8 @@ export default function Personal() {
         <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
           <div style={{
-            background: 'linear-gradient(135deg, var(--bg-surface), rgba(45,212,164,0.06))',
-            border: '1px solid rgba(45,212,164,0.2)',
+            background: 'linear-gradient(135deg, var(--bg-surface), var(--income-dim))',
+            border: '1px solid var(--income-border)',
             borderRadius: 'var(--radius-2xl)', padding: '20px',
           }}>
             <p className="label-uppercase" style={{ marginBottom: '4px' }}>Total ingresos · {nombreMes(mesActual)} {anioActual}</p>
@@ -478,7 +478,7 @@ export default function Personal() {
             onClick={openAddIngreso}
             style={{
               width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
-              border: '1px dashed rgba(45,212,164,0.35)', background: 'rgba(45,212,164,0.06)',
+              border: '1px dashed var(--income-border)', background: 'var(--income-dim)',
               color: 'var(--income)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
               justifyContent: 'center', gap: '8px',

@@ -68,7 +68,7 @@ export default function Sidebar() {
       <div style={{ padding: '12px 10px' }}>
         <div style={{
           display: 'flex',
-          background: 'rgba(255,255,255,0.04)',
+          background: 'var(--bg-surface-2)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '3px',

@@ -85,8 +85,8 @@ export default function Metas() {
       {/* Resumen */}
       <div style={{ padding: '0 20px 24px' }}>
         <div style={{
-          background: 'linear-gradient(145deg, var(--bg-surface), rgba(45,212,164,0.08))',
-          border: '1px solid rgba(45,212,164,0.2)',
+          background: 'linear-gradient(145deg, var(--bg-surface), var(--income-dim))',
+          border: '1px solid var(--income-border)',
           borderRadius: 'var(--radius-2xl)',
           padding: '20px',
         }}>
@@ -118,7 +118,7 @@ export default function Metas() {
           return (
             <div key={meta.id} style={{
               background: 'var(--bg-surface)',
-              border: `1px solid ${completada ? 'rgba(45,212,164,0.3)' : 'var(--border)'}`,
+              border: `1px solid ${completada ? 'var(--income-border)' : 'var(--border)'}`,
               borderRadius: 'var(--radius-lg)',
               padding: '16px',
             }}>
@@ -213,7 +213,7 @@ export default function Metas() {
           onClick={() => { setNombre(''); setMetaTotal(0); setMeses(12); setEmoji('💰'); setTea(12); setAddOpen(true) }}
           style={{
             width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
-            border: '1px dashed rgba(45,212,164,0.35)', background: 'rgba(45,212,164,0.06)',
+            border: '1px dashed var(--income-border)', background: 'var(--income-dim)',
             color: 'var(--income)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
             fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
             justifyContent: 'center', gap: '8px',

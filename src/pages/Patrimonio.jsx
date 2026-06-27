@@ -101,8 +101,8 @@ export default function Patrimonio() {
       {/* Resumen */}
       <div style={{ padding: '0 20px 24px' }}>
         <div style={{
-          background: 'linear-gradient(145deg, var(--bg-surface), rgba(245,183,49,0.06))',
-          border: '1px solid rgba(245,183,49,0.2)',
+          background: 'linear-gradient(145deg, var(--bg-surface), var(--warning-dim))',
+          border: '1px solid var(--warning-border)',
           borderRadius: 'var(--radius-2xl)',
           padding: '20px',
         }}>
@@ -199,7 +199,7 @@ export default function Patrimonio() {
             onClick={() => { setNombre(''); setValor(0); setEmoji('💰'); setTipo('Cuenta de Ahorro'); setAddOpen(true) }}
             style={{
               width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
-              border: '1px dashed rgba(245,183,49,0.35)', background: 'rgba(245,183,49,0.06)',
+              border: '1px dashed var(--warning-border)', background: 'var(--warning-dim)',
               color: 'var(--warning)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center',
               justifyContent: 'center', gap: '8px',

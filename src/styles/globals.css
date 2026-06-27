@@ -18,11 +18,16 @@
   /* Semánticos */
   --income:         #2DD4A4;
   --income-dim:     rgba(45,212,164,0.12);
+  --income-border:  rgba(45,212,164,0.28);
   --expense:        #F06B6B;
   --expense-dim:    rgba(240,107,107,0.12);
+  --expense-border: rgba(240,107,107,0.28);
   --warning:        #F5B731;
   --warning-dim:    rgba(245,183,49,0.12);
+  --warning-border: rgba(245,183,49,0.28);
   --debt:           #C084FC;
+  --debt-dim:       rgba(192,132,252,0.12);
+  --debt-border:    rgba(192,132,252,0.28);
 
   /* Texto */
   --text-primary:   #F0F0FA;
@@ -395,21 +400,44 @@ select.input-field { cursor: pointer; }
   --bg-surface:     #FFFFFF;
   --bg-surface-2:   #F7F7FC;
   --bg-surface-3:   #EEEEF6;
-  --bg-overlay:     rgba(230,230,244,0.95);
+  --bg-overlay:     rgba(242,242,248,0.96);
 
   --text-primary:   #0F0F1A;
   --text-secondary: #4A4A6A;
-  --text-muted:     #9898B8;
+  --text-muted:     #7878A0;
   --text-inverse:   #F0F0FA;
 
-  --border:         rgba(0,0,0,0.07);
-  --border-strong:  rgba(0,0,0,0.12);
+  --border:         rgba(0,0,0,0.08);
+  --border-strong:  rgba(0,0,0,0.14);
 
-  --glass-bg:       rgba(255,255,255,0.88);
+  /* Accent — morado ligeramente más oscuro para contraste sobre blanco */
+  --accent:         #5B50E8;
+  --accent-dim:     rgba(91,80,232,0.10);
+  --accent-border:  rgba(91,80,232,0.22);
+  --accent-glow:    rgba(91,80,232,0.18);
+  --shadow-accent:  0 4px 20px rgba(91,80,232,0.15);
+
+  /* Semánticos — más oscuros para contraste WCAG AA sobre fondos claros */
+  --income:         #059669;
+  --income-dim:     rgba(5,150,105,0.10);
+  --income-border:  rgba(5,150,105,0.22);
+  --expense:        #DC2626;
+  --expense-dim:    rgba(220,38,38,0.10);
+  --expense-border: rgba(220,38,38,0.22);
+  --warning:        #B45309;
+  --warning-dim:    rgba(180,83,9,0.10);
+  --warning-border: rgba(180,83,9,0.22);
+  --debt:           #7C3AED;
+  --debt-dim:       rgba(124,58,237,0.10);
+  --debt-border:    rgba(124,58,237,0.22);
+
+  --studio:         #1D6FD1;
+  --studio-dim:     rgba(29,111,209,0.10);
+
+  --glass-bg:       rgba(255,255,255,0.90);
   --shadow-sm:      0 2px 8px rgba(0,0,0,0.06);
   --shadow-md:      0 4px 20px rgba(0,0,0,0.10);
   --shadow-lg:      0 8px 40px rgba(0,0,0,0.14);
-  --shadow-accent:  0 4px 20px rgba(124,111,247,0.15);
 
   color-scheme: light;
 }
