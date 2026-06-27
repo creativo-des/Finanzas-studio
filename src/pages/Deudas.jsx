@@ -53,9 +53,13 @@ function TasasChip({ tasaEA, tasaMV, color = 'var(--text-secondary)' }) {
   )
 }
 
-// ── Panel TEA → TMV (para formularios) ───────────────────────────────
-function TasasPanel({ tea, accentColor = 'var(--accent)' }) {
-  const tmv = teaToTmv(tea)
+// ── Panel TEA ↔ TMV (para formularios) ───────────────────────────────
+function TasasPanel({ tea, tmv: tmvProp, accentColor = 'var(--accent)' }) {
+  const tmv = tmvProp !== undefined ? tmvProp : teaToTmv(tea || 0)
+  const teaDisplay = tea != null
+    ? parseFloat(tea).toFixed(2)
+    : ((Math.pow(1 + tmv, 12) - 1) * 100).toFixed(2)
+  if (tmv === 0 && tea === 0) return null
   return (
     <div style={{
       display: 'flex',
@@ -63,12 +67,12 @@ function TasasPanel({ tea, accentColor = 'var(--accent)' }) {
       borderRadius: 'var(--radius-md)', overflow: 'hidden',
     }}>
       <div style={{ flex: 1, padding: '10px 14px', textAlign: 'center' }}>
-        <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '3px' }}>TEA ingresada</p>
-        <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Space Grotesk, sans-serif' }}>{tea}%</p>
+        <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '3px' }}>TEA</p>
+        <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Space Grotesk, sans-serif' }}>{teaDisplay}%</p>
       </div>
       <div style={{ width: '1px', background: 'var(--border)' }} />
       <div style={{ flex: 1, padding: '10px 14px', textAlign: 'center' }}>
-        <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '3px' }}>TMV equivalente</p>
+        <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '3px' }}>TMV</p>
         <p style={{ fontSize: '16px', fontWeight: 700, color: accentColor, fontFamily: 'Space Grotesk, sans-serif' }}>{fmtPct(tmv)}</p>
       </div>
     </div>
@@ -86,16 +90,24 @@ export default function Deudas() {
   const totalDeuda = calcTotalDeudas(deudas)
 
   // ── Add ──────────────────────────────────────────────────────
-  const [addOpen, setAddOpen]             = useState(false)
-  const [dEmoji, setDEmoji]               = useState('🏦')
-  const [dTipo, setDTipo]                 = useState('')
-  const [dMonto, setDMonto]               = useState(0)
-  const [dTea, setDTea]                   = useState(0)
-  const [dPlazo, setDPlazo]               = useState(12)
-  const [addError, setAddError]           = useState('')
+  const [addOpen, setAddOpen]     = useState(false)
+  const [dEmoji, setDEmoji]       = useState('🏦')
+  const [dTipo, setDTipo]         = useState('')
+  const [dMonto, setDMonto]       = useState(0)
+  const [dMontoStr, setDMontoStr] = useState('')
+  const [dTea, setDTea]           = useState(0)
+  const [dTmvInput, setDTmvInput] = useState(0)
+  const [useTmv, setUseTmv]       = useState(false)
+  const [dPlazo, setDPlazo]       = useState(12)
+  const [addError, setAddError]   = useState('')
 
-  const dTmv      = teaToTmv(dTea)
-  const dCuota    = calcCuota(dMonto, dTea, dPlazo)
+  const dTmv      = useTmv ? dTmvInput / 100 : teaToTmv(dTea)
+  const dTeaFinal = useTmv
+    ? parseFloat(((Math.pow(1 + dTmvInput / 100, 12) - 1) * 100).toFixed(4))
+    : dTea
+  const dCuota    = dMonto > 0 && dPlazo > 0
+    ? (dTmv > 0 ? calcAmortizacion(dMonto, dTmv * 100, dPlazo) : dMonto / dPlazo)
+    : 0
   const dIntereses = Math.max(0, dCuota * dPlazo - dMonto)
   const addReady  = dTipo.trim().length > 0 && dMonto > 0
 
@@ -123,7 +135,8 @@ export default function Deudas() {
 
   // ── Handlers ─────────────────────────────────────────────────
   const openAdd = () => {
-    setDTipo(''); setDMonto(0); setDTea(0); setDPlazo(12); setDEmoji('🏦'); setAddError('')
+    setDTipo(''); setDMonto(0); setDMontoStr(''); setDTea(0); setDTmvInput(0); setUseTmv(false)
+    setDPlazo(12); setDEmoji('🏦'); setAddError('')
     setAddOpen(true)
   }
 
@@ -139,7 +152,7 @@ export default function Deudas() {
         deudaInicial: dMonto,
         deudaActual: dMonto,
         mensualidad: Math.round(dCuota),
-        tasaEA: dTea,
+        tasaEA: parseFloat(dTeaFinal.toFixed(4)),
         tasaMV: dTmv,
         plazoMeses: dPlazo,
         completado: 0,
@@ -433,8 +446,9 @@ export default function Deudas() {
 
       {/* ── Sheet: nueva deuda ───────────────────────────────── */}
       <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Nueva deuda">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
+          {/* Ícono */}
           <div>
             <label className="input-label">Ícono</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -452,60 +466,97 @@ export default function Deudas() {
             </div>
           </div>
 
+          {/* Tipo */}
           <div>
             <label className="input-label">Tipo de crédito</label>
             <input
               className="input-field"
               value={dTipo}
               onChange={e => { setDTipo(e.target.value); setAddError('') }}
-              placeholder="Crédito tecnología, hipotecario..."
+              placeholder="Ej: Crédito tecnología, hipotecario..."
             />
           </div>
 
+          {/* Monto — input directo sin formato de miles para evitar bugs en móvil */}
           <div>
             <label className="input-label">Monto del crédito</label>
-            <div className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 14px' }}>
-              <span style={{ color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '18px', flexShrink: 0 }}>$</span>
+            <div className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px' }}>
+              <span style={{ color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '20px', flexShrink: 0 }}>$</span>
               <input
                 type="text"
                 inputMode="numeric"
                 placeholder="0"
-                value={dMonto > 0 ? dMonto.toLocaleString('es-CO') : ''}
+                value={dMontoStr}
                 onChange={e => {
                   const raw = e.target.value.replace(/\D/g, '')
-                  setDMonto(raw ? Number(raw) : 0)
+                  setDMontoStr(raw)
+                  setDMonto(Number(raw) || 0)
                   setAddError('')
                 }}
                 style={{
                   flex: 1, background: 'transparent', border: 'none', outline: 'none',
                   fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700,
-                  fontSize: '20px', color: 'var(--text-primary)', padding: 0, minWidth: 0,
+                  fontSize: '22px', color: 'var(--text-primary)', padding: 0, minWidth: 0,
                 }}
               />
             </div>
+            {dMonto > 0 && (
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', paddingLeft: '2px' }}>
+                {dMonto.toLocaleString('es-CO')} COP
+              </p>
+            )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div>
-              <label className="input-label">TEA (%)</label>
-              <input
-                className="input-field" type="number" step="0.1" min={0}
-                value={dTea}
-                onChange={e => setDTea(Math.max(0, Number(e.target.value)))}
-                placeholder="0"
-              />
+          {/* Tasas + Plazo */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <label className="input-label" style={{ marginBottom: 0 }}>
+                {useTmv ? 'Tasa mes vencido — TMV (%)' : 'Tasa efectiva anual — TEA (%)'}
+              </label>
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => setUseTmv(v => !v)}
+                style={{
+                  padding: '4px 10px', borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--debt-border)', background: 'var(--debt-dim)',
+                  color: 'var(--debt)', fontSize: '11px', fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
+                }}
+              >
+                {useTmv ? 'Usar TEA' : 'Usar TMV'}
+              </motion.button>
             </div>
-            <div>
-              <label className="input-label">Plazo (meses)</label>
-              <input
-                className="input-field" type="number" min={1}
-                value={dPlazo}
-                onChange={e => setDPlazo(Math.max(1, Number(e.target.value)))}
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                {useTmv ? (
+                  <input
+                    className="input-field" type="number" step="0.01" min={0}
+                    value={dTmvInput}
+                    onChange={e => setDTmvInput(Math.max(0, Number(e.target.value)))}
+                    placeholder="Ej: 1.88"
+                  />
+                ) : (
+                  <input
+                    className="input-field" type="number" step="0.1" min={0}
+                    value={dTea}
+                    onChange={e => setDTea(Math.max(0, Number(e.target.value)))}
+                    placeholder="Ej: 25"
+                  />
+                )}
+              </div>
+              <div>
+                <label className="input-label">Plazo (meses)</label>
+                <input
+                  className="input-field" type="number" min={1}
+                  value={dPlazo}
+                  onChange={e => setDPlazo(Math.max(1, Number(e.target.value)))}
+                />
+              </div>
             </div>
           </div>
 
-          <TasasPanel tea={dTea} accentColor="var(--debt)" />
+          {/* Panel TEA ↔ TMV */}
+          <TasasPanel tea={dTeaFinal} tmv={dTmv} accentColor="var(--debt)" />
 
           {/* Preview cuota */}
           {dMonto > 0 && (
@@ -514,9 +565,9 @@ export default function Deudas() {
               borderRadius: 'var(--radius-md)', overflow: 'hidden',
             }}>
               {[
-                { label: 'Cuota mensual',   value: dCuota,    color: 'var(--debt)' },
-                { label: 'Total intereses', value: dIntereses, color: 'var(--expense)' },
-                { label: 'Total a pagar',   value: dCuota * dPlazo, color: 'var(--text-primary)' },
+                { label: 'Cuota mensual',   value: dCuota,          color: 'var(--debt)'         },
+                { label: 'Total intereses', value: dIntereses,       color: 'var(--expense)'      },
+                { label: 'Total a pagar',   value: dCuota * dPlazo, color: 'var(--text-primary)'  },
               ].map((row, i, arr) => (
                 <div key={row.label} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -534,22 +585,26 @@ export default function Deudas() {
 
           {/* Error */}
           {addError && (
-            <p style={{ fontSize: '13px', color: 'var(--expense)', textAlign: 'center' }}>⚠️ {addError}</p>
+            <p style={{ fontSize: '13px', color: 'var(--expense)', textAlign: 'center', fontWeight: 500 }}>
+              ⚠️ {addError}
+            </p>
           )}
 
-          <motion.button
-            whileTap={{ scale: 0.96 }}
-            onClick={handleAddDeuda}
-            style={{
-              width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
-              background: addReady ? 'var(--debt)' : 'var(--bg-surface-3)',
-              color: addReady ? 'white' : 'var(--text-muted)',
-              fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px', cursor: 'pointer',
-              marginTop: '8px',
-            }}
-          >
-            Registrar deuda
-          </motion.button>
+          {/* Separador + Botón */}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+            <motion.button
+              whileTap={{ scale: 0.96 }}
+              onClick={handleAddDeuda}
+              style={{
+                width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
+                background: addReady ? 'var(--debt)' : 'var(--bg-surface-3)',
+                color: addReady ? 'white' : 'var(--text-muted)',
+                fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', cursor: 'pointer',
+              }}
+            >
+              {addReady ? 'Registrar deuda' : 'Completa el formulario'}
+            </motion.button>
+          </div>
         </div>
       </Sheet>
 
