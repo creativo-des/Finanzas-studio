@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Pencil, CircleDollarSign } from 'lucide-react'
+import { Plus, Pencil, CircleDollarSign, Calculator } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'
@@ -18,17 +18,62 @@ import { useHaptic } from '../hooks/useHaptic'
 
 const EMOJIS_DEUDA = ['🏦', '💻', '🚗', '🏠', '📱', '🎓', '🏥', '💳', '✈️', '🛠️']
 
-// TEA → TMV: tasa mensual efectiva vencida
 const teaToTmv = (tea) => Math.pow(1 + tea / 100, 1 / 12) - 1
 
-// TEA → cuota mensual (fórmula de amortización con TMV)
-const cuotaDesdeTea = (monto, tea, plazo) => {
-  if (plazo <= 0 || monto <= 0) return 0
+const calcCuota = (monto, tea, plazo) => {
+  if (!monto || !plazo) return 0
   const tmv = teaToTmv(tea)
   return calcAmortizacion(monto, tmv * 100, plazo)
 }
 
-const formatPct = (v) => `${(v * 100).toFixed(4)}%`
+const fmtPct = (v) => `${(v * 100).toFixed(4)}%`
+
+// ── Chip TEA / TMV ────────────────────────────────────────────────────
+function TasasChip({ tasaEA, tasaMV, color = 'var(--text-secondary)' }) {
+  if (!tasaMV && !tasaEA) return null
+  const tmv = tasaMV ?? (tasaEA != null ? teaToTmv(tasaEA) : 0)
+  return (
+    <div style={{
+      display: 'flex', marginBottom: '10px',
+      background: 'var(--bg-surface-2)', border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-sm)', overflow: 'hidden',
+    }}>
+      <div style={{ flex: 1, padding: '7px 12px', textAlign: 'center' }}>
+        <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>TEA</p>
+        <p style={{ fontSize: '13px', fontWeight: 600, color }}>
+          {tasaEA != null ? `${tasaEA}%` : `${((Math.pow(1 + tmv, 12) - 1) * 100).toFixed(2)}%`}
+        </p>
+      </div>
+      <div style={{ width: '1px', background: 'var(--border)' }} />
+      <div style={{ flex: 1, padding: '7px 12px', textAlign: 'center' }}>
+        <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>TMV</p>
+        <p style={{ fontSize: '13px', fontWeight: 600, color }}>{fmtPct(tmv)}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── Panel TEA → TMV (para formularios) ───────────────────────────────
+function TasasPanel({ tea, accentColor = 'var(--accent)' }) {
+  const tmv = teaToTmv(tea)
+  return (
+    <div style={{
+      display: 'flex',
+      background: 'var(--bg-surface-2)', border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-md)', overflow: 'hidden',
+    }}>
+      <div style={{ flex: 1, padding: '10px 14px', textAlign: 'center' }}>
+        <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '3px' }}>TEA ingresada</p>
+        <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Space Grotesk, sans-serif' }}>{tea}%</p>
+      </div>
+      <div style={{ width: '1px', background: 'var(--border)' }} />
+      <div style={{ flex: 1, padding: '10px 14px', textAlign: 'center' }}>
+        <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '3px' }}>TMV equivalente</p>
+        <p style={{ fontSize: '16px', fontWeight: 700, color: accentColor, fontFamily: 'Space Grotesk, sans-serif' }}>{fmtPct(tmv)}</p>
+      </div>
+    </div>
+  )
+}
 
 export default function Deudas() {
   const { state, dispatch } = useFinance()
@@ -36,7 +81,6 @@ export default function Deudas() {
   const { toast, showToast } = useToast()
   const haptic = useHaptic()
 
-  // Solo las deudas del modo activo
   const deudas   = state.personal.deudas.filter(d => (d.modo ?? 'personal') === mode)
   const tarjetas = state.personal.tarjetas.filter(t => t.tipo === 'credito')
   const totalDeuda = calcTotalDeudas(deudas)
@@ -45,13 +89,15 @@ export default function Deudas() {
   const [addOpen, setAddOpen]             = useState(false)
   const [dEmoji, setDEmoji]               = useState('🏦')
   const [dTipo, setDTipo]                 = useState('')
-  const [dDeudaInicial, setDDeudaInicial] = useState(0)
+  const [dMonto, setDMonto]               = useState(0)
   const [dTea, setDTea]                   = useState(0)
   const [dPlazo, setDPlazo]               = useState(12)
+  const [addError, setAddError]           = useState('')
 
-  const dTmv       = teaToTmv(dTea)
-  const dCuotaCalc = cuotaDesdeTea(dDeudaInicial, dTea, dPlazo)
-  const dIntereses = Math.max(0, dCuotaCalc * dPlazo - dDeudaInicial)
+  const dTmv      = teaToTmv(dTea)
+  const dCuota    = calcCuota(dMonto, dTea, dPlazo)
+  const dIntereses = Math.max(0, dCuota * dPlazo - dMonto)
+  const addReady  = dTipo.trim().length > 0 && dMonto > 0
 
   // ── Edit ─────────────────────────────────────────────────────
   const [editDeuda, setEditDeuda]             = useState(null)
@@ -65,25 +111,34 @@ export default function Deudas() {
   const [montoPago, setMontoPago] = useState(0)
 
   // ── Simulador ────────────────────────────────────────────────
+  const [simOpen, setSimOpen]   = useState(false)
   const [simMonto, setSimMonto] = useState(0)
   const [simPlazo, setSimPlazo] = useState(12)
-  const [simTea, setSimTea]     = useState(25)    // TEA en %
+  const [simTea, setSimTea]     = useState(25)
 
-  const simTmv        = teaToTmv(simTea)
-  const cuotaSim      = simMonto > 0 && simPlazo > 0 ? calcAmortizacion(simMonto, simTmv * 100, simPlazo) : 0
-  const totalIntereses = Math.max(0, cuotaSim * simPlazo - simMonto)
+  const simTmv         = teaToTmv(simTea)
+  const cuotaSim       = simMonto > 0 ? calcAmortizacion(simMonto, simTmv * 100, simPlazo) : 0
+  const totalIntereses  = Math.max(0, cuotaSim * simPlazo - simMonto)
+  const totalPagar      = cuotaSim * simPlazo
 
   // ── Handlers ─────────────────────────────────────────────────
+  const openAdd = () => {
+    setDTipo(''); setDMonto(0); setDTea(0); setDPlazo(12); setDEmoji('🏦'); setAddError('')
+    setAddOpen(true)
+  }
+
   const handleAddDeuda = () => {
-    if (!dTipo.trim() || !dDeudaInicial) return
+    if (!dTipo.trim()) { setAddError('Escribe el tipo de crédito'); return }
+    if (!dMonto)       { setAddError('Ingresa el monto del crédito'); return }
+    setAddError('')
     dispatch({
       type: ACTIONS.ADD_DEUDA,
       payload: {
         tipo: dTipo.trim(),
         emoji: dEmoji,
-        deudaInicial: dDeudaInicial,
-        deudaActual: dDeudaInicial,
-        mensualidad: Math.round(dCuotaCalc),
+        deudaInicial: dMonto,
+        deudaActual: dMonto,
+        mensualidad: Math.round(dCuota),
         tasaEA: dTea,
         tasaMV: dTmv,
         plazoMeses: dPlazo,
@@ -94,15 +149,11 @@ export default function Deudas() {
     haptic.success()
     showToast({ message: 'Deuda registrada ✓' })
     setAddOpen(false)
-    setDTipo(''); setDDeudaInicial(0); setDTea(0); setDPlazo(12); setDEmoji('🏦')
   }
 
   const openEdit = (d) => {
-    setEditDeuda(d)
-    setEditEmoji(d.emoji)
-    setEditTipo(d.tipo)
-    setEditDeudaActual(d.deudaActual)
-    setEditMensualidad(d.mensualidad)
+    setEditDeuda(d); setEditEmoji(d.emoji); setEditTipo(d.tipo)
+    setEditDeudaActual(d.deudaActual); setEditMensualidad(d.mensualidad)
   }
 
   const handleUpdateDeuda = () => {
@@ -147,7 +198,7 @@ export default function Deudas() {
   return (
     <PageLayout header={<PageHeader title="Deudas" />}>
 
-      {/* Hero deuda total */}
+      {/* Hero */}
       <div style={{ padding: '0 20px 24px' }}>
         <div style={{
           background: 'linear-gradient(145deg, var(--bg-surface), rgba(192,132,252,0.08))',
@@ -163,11 +214,26 @@ export default function Deudas() {
               color: 'var(--debt)', display: 'block', marginBottom: '8px',
             }}
           />
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-            {deudas.reduce((s, d) => s + d.mensualidad, 0) > 0
-              ? `${formatCOP(deudas.reduce((s, d) => s + d.mensualidad, 0))} / mes en cuotas`
-              : 'Sin cuotas mensuales'}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+              {deudas.reduce((s, d) => s + d.mensualidad, 0) > 0
+                ? `${formatCOP(deudas.reduce((s, d) => s + d.mensualidad, 0))} / mes en cuotas`
+                : 'Sin cuotas mensuales'}
+            </p>
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={() => setSimOpen(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '7px 12px', borderRadius: 'var(--radius-md)',
+                border: '1px solid rgba(192,132,252,0.3)', background: 'rgba(192,132,252,0.1)',
+                color: 'var(--debt)', fontSize: '12px', fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+              }}
+            >
+              <Calculator size={13} /> Simular
+            </motion.button>
+          </div>
         </div>
       </div>
 
@@ -189,8 +255,6 @@ export default function Deudas() {
           {deudas.map(d => {
             const pct    = d.deudaInicial > 0 ? 100 - (d.deudaActual / d.deudaInicial) * 100 : 0
             const pagada = d.deudaActual <= 0
-            const rDeuda = d.tasaMV ?? (d.tasaEA != null ? teaToTmv(d.tasaEA) : null)
-
             return (
               <div key={d.id} style={{
                 background: 'var(--bg-surface)',
@@ -198,7 +262,7 @@ export default function Deudas() {
                 borderRadius: 'var(--radius-lg)',
                 padding: '16px',
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                   <span style={{ fontSize: '15px', fontWeight: 500 }}>{d.emoji} {d.tipo}</span>
                   <span className={`badge ${pagada ? 'badge-green' : 'badge-purple'}`}>
                     {pagada ? '¡Pagada!' : `${d.completado.toFixed(1)}% pagado`}
@@ -213,36 +277,19 @@ export default function Deudas() {
                 </p>
 
                 {!pagada && (
-                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                    de {formatCOP(d.deudaInicial)} · Cuota: {formatCOP(d.mensualidad)}/mes
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                    de {formatCOP(d.deudaInicial)}
                     {d.plazoMeses ? ` · ${d.plazoMeses} meses` : ''}
+                    {d.mensualidad ? ` · Cuota: ${formatCOP(d.mensualidad)}/mes` : ''}
                   </p>
                 )}
 
-                {/* Tasas */}
-                {rDeuda != null && rDeuda > 0 && (
-                  <div style={{
-                    display: 'flex', gap: '0', marginBottom: '10px',
-                    background: 'var(--bg-surface-2)', border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-sm)', overflow: 'hidden',
-                  }}>
-                    <div style={{ flex: 1, padding: '7px 12px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>TEA</p>
-                      <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                        {d.tasaEA != null ? `${d.tasaEA}%` : `${((Math.pow(1 + rDeuda, 12) - 1) * 100).toFixed(2)}%`}
-                      </p>
-                    </div>
-                    <div style={{ width: '1px', background: 'var(--border)' }} />
-                    <div style={{ flex: 1, padding: '7px 12px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>TMV</p>
-                      <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--debt)' }}>{formatPct(rDeuda)}</p>
-                    </div>
-                  </div>
+                {(d.tasaEA != null || d.tasaMV != null) && (
+                  <TasasChip tasaEA={d.tasaEA} tasaMV={d.tasaMV} color="var(--debt)" />
                 )}
 
                 <ProgressBar percent={pct} color={pagada ? 'var(--income)' : 'var(--debt)'} />
 
-                {/* Acciones */}
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   {!pagada && (
                     <motion.button
@@ -278,7 +325,7 @@ export default function Deudas() {
 
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={() => { setDTipo(''); setDDeudaInicial(0); setDTea(0); setDPlazo(12); setDEmoji('🏦'); setAddOpen(true) }}
+            onClick={openAdd}
             style={{
               width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
               border: '1px dashed rgba(240,107,107,0.35)', background: 'rgba(240,107,107,0.06)',
@@ -306,10 +353,10 @@ export default function Deudas() {
                   border: `1px solid ${overLimit ? 'rgba(240,107,107,0.4)' : pct >= 80 ? 'rgba(245,183,49,0.3)' : 'var(--border)'}`,
                   borderRadius: 'var(--radius-lg)', padding: '16px',
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                     <div>
                       <p style={{ fontSize: '15px', fontWeight: 500 }}>{t.nombre}</p>
-                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t.banco} · Tasa: {t.tasa}%/mes</p>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t.banco} · {t.tasa}% / mes</p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', color: t.color }}>
@@ -318,17 +365,9 @@ export default function Deudas() {
                       <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>de {formatCOP(t.limite)}</p>
                     </div>
                   </div>
-                  <ProgressBar percent={Math.min(100, pct)} color={pct > 100 ? 'var(--expense)' : pct >= 80 ? 'var(--warning)' : undefined} />
-                  {overLimit && (
-                    <p style={{ fontSize: '11px', color: 'var(--expense)', marginTop: '6px', fontWeight: 600 }}>
-                      ⚠️ Sobre el límite ({pct.toFixed(0)}% usado)
-                    </p>
-                  )}
-                  {!overLimit && pct >= 80 && (
-                    <p style={{ fontSize: '11px', color: 'var(--warning)', marginTop: '6px' }}>
-                      {pct.toFixed(0)}% del límite usado
-                    </p>
-                  )}
+                  <ProgressBar percent={Math.min(100, pct)} color={overLimit ? 'var(--expense)' : pct >= 80 ? 'var(--warning)' : undefined} />
+                  {overLimit && <p style={{ fontSize: '11px', color: 'var(--expense)', marginTop: '6px', fontWeight: 600 }}>⚠️ Sobre el límite ({pct.toFixed(0)}% usado)</p>}
+                  {!overLimit && pct >= 80 && <p style={{ fontSize: '11px', color: 'var(--warning)', marginTop: '6px' }}>{pct.toFixed(0)}% del límite usado</p>}
                 </div>
               )
             })}
@@ -336,70 +375,63 @@ export default function Deudas() {
         </div>
       )}
 
-      {/* Simulador */}
-      <div style={{ padding: '0 20px 24px' }}>
-        <p className="label-uppercase" style={{ marginBottom: '12px' }}>Simular nuevo crédito</p>
-        <div style={{
-          background: 'var(--bg-surface)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)', padding: '16px',
-        }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-            <div>
-              <label className="input-label">Monto ($)</label>
-              <input className="input-field" type="number" inputMode="numeric" min={0}
-                value={simMonto || ''} onChange={e => setSimMonto(Math.max(0, Number(e.target.value)))} placeholder="0" />
-            </div>
+      {/* ── Sheet: simulador ──────────────────────────────────── */}
+      <Sheet open={simOpen} onClose={() => setSimOpen(false)} title="Simulador de crédito">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          <div>
+            <label className="input-label">Monto del crédito</label>
+            <AmountInput value={simMonto} onChange={setSimMonto} />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label className="input-label">Plazo (meses)</label>
-              <input className="input-field" type="number" inputMode="numeric" min={1}
-                value={simPlazo} onChange={e => setSimPlazo(Math.max(1, Number(e.target.value)))} />
+              <input
+                className="input-field" type="number" inputMode="numeric" min={1}
+                value={simPlazo} onChange={e => setSimPlazo(Math.max(1, Number(e.target.value)))}
+              />
             </div>
             <div>
               <label className="input-label">TEA (%)</label>
-              <input className="input-field" type="number" inputMode="decimal" step="0.1" min={0}
-                value={simTea} onChange={e => setSimTea(Math.max(0, Number(e.target.value)))} placeholder="25" />
+              <input
+                className="input-field" type="number" inputMode="decimal" step="0.1" min={0}
+                value={simTea} onChange={e => setSimTea(Math.max(0, Number(e.target.value)))}
+                placeholder="Ej: 25"
+              />
             </div>
           </div>
 
-          {/* TMV derivada */}
+          <TasasPanel tea={simTea} accentColor="var(--debt)" />
+
+          {/* Resultados */}
           <div style={{
-            display: 'flex', gap: '0', marginBottom: '12px',
             background: 'var(--bg-surface-2)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-sm)', overflow: 'hidden',
-          }}>
-            <div style={{ flex: 1, padding: '8px 12px', textAlign: 'center' }}>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>TEA</p>
-              <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Space Grotesk, sans-serif' }}>{simTea}%</p>
-            </div>
-            <div style={{ width: '1px', background: 'var(--border)' }} />
-            <div style={{ flex: 1, padding: '8px 12px', textAlign: 'center' }}>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>TMV</p>
-              <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--debt)', fontFamily: 'Space Grotesk, sans-serif' }}>{formatPct(simTmv)}</p>
-            </div>
-          </div>
-
-          <div style={{
-            background: 'var(--bg-surface-3)', borderRadius: 'var(--radius-md)', padding: '14px',
-            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px',
+            borderRadius: 'var(--radius-lg)', overflow: 'hidden',
             opacity: simMonto > 0 ? 1 : 0.45,
           }}>
-            <div>
-              <p className="label-uppercase" style={{ marginBottom: '4px' }}>Cuota mensual</p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '18px', color: 'var(--income)' }}>
-                {simMonto > 0 ? formatCOP(Math.round(cuotaSim)) : '—'}
-              </p>
-            </div>
-            <div>
-              <p className="label-uppercase" style={{ marginBottom: '4px' }}>Total intereses</p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '18px', color: 'var(--expense)' }}>
-                {simMonto > 0 ? formatCOP(Math.round(totalIntereses)) : '—'}
-              </p>
-            </div>
+            {[
+              { label: 'Cuota mensual',    value: cuotaSim,     color: 'var(--income)' },
+              { label: 'Total intereses',  value: totalIntereses, color: 'var(--expense)' },
+              { label: 'Total a pagar',    value: totalPagar,    color: 'var(--text-primary)' },
+            ].map((row, i, arr) => (
+              <div key={row.label} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '14px 16px',
+                borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
+              }}>
+                <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{row.label}</p>
+                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', color: row.color }}>
+                  {simMonto > 0 ? formatCOP(Math.round(row.value)) : '—'}
+                </p>
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
 
-      {/* Sheet: nueva deuda */}
+        </div>
+      </Sheet>
+
+      {/* ── Sheet: nueva deuda ───────────────────────────────── */}
       <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Nueva deuda">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
@@ -422,69 +454,79 @@ export default function Deudas() {
 
           <div>
             <label className="input-label">Tipo de crédito</label>
-            <input className="input-field" value={dTipo} onChange={e => setDTipo(e.target.value)} placeholder="Crédito tecnología, hipotecario..." />
+            <input
+              className="input-field"
+              value={dTipo}
+              onChange={e => { setDTipo(e.target.value); setAddError('') }}
+              placeholder="Crédito tecnología, hipotecario..."
+            />
           </div>
 
           <div>
             <label className="input-label">Monto del crédito</label>
-            <AmountInput value={dDeudaInicial} onChange={setDDeudaInicial} />
+            <AmountInput value={dMonto} onChange={v => { setDMonto(v); setAddError('') }} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label className="input-label">TEA (%)</label>
-              <input className="input-field" type="number" step="0.1" min={0}
-                value={dTea} onChange={e => setDTea(Math.max(0, Number(e.target.value)))} placeholder="Ej: 25" />
+              <input
+                className="input-field" type="number" step="0.1" min={0}
+                value={dTea}
+                onChange={e => setDTea(Math.max(0, Number(e.target.value)))}
+                placeholder="0"
+              />
             </div>
             <div>
               <label className="input-label">Plazo (meses)</label>
-              <input className="input-field" type="number" min={1}
-                value={dPlazo} onChange={e => setDPlazo(Math.max(1, Number(e.target.value)))} />
+              <input
+                className="input-field" type="number" min={1}
+                value={dPlazo}
+                onChange={e => setDPlazo(Math.max(1, Number(e.target.value)))}
+              />
             </div>
           </div>
 
-          {/* TEA → TMV */}
-          <div style={{
-            display: 'flex', background: 'var(--bg-surface-2)',
-            border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflow: 'hidden',
-          }}>
-            <div style={{ flex: 1, padding: '10px 14px', textAlign: 'center' }}>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '3px' }}>TEA ingresada</p>
-              <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Space Grotesk, sans-serif' }}>{dTea}%</p>
-            </div>
-            <div style={{ width: '1px', background: 'var(--border)' }} />
-            <div style={{ flex: 1, padding: '10px 14px', textAlign: 'center' }}>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '3px' }}>TMV equivalente</p>
-              <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--debt)', fontFamily: 'Space Grotesk, sans-serif' }}>{formatPct(dTmv)}</p>
-            </div>
-          </div>
+          <TasasPanel tea={dTea} accentColor="var(--debt)" />
 
           {/* Preview cuota */}
-          {dDeudaInicial > 0 && (
-            <div style={{ background: 'rgba(192,132,252,0.08)', border: '1px solid rgba(192,132,252,0.2)', borderRadius: 'var(--radius-md)', padding: '14px 16px' }}>
-              <p style={{ fontSize: '12px', color: 'var(--debt)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: '4px' }}>
-                Cuota mensual estimada
-              </p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '22px', color: 'var(--debt)' }}>
-                {formatCOP(Math.round(dCuotaCalc))}
-              </p>
-              {dIntereses > 0 && (
-                <p style={{ fontSize: '12px', color: 'var(--debt)', marginTop: '4px', opacity: 0.75 }}>
-                  Total intereses: {formatCOP(Math.round(dIntereses))} · TMV {formatPct(dTmv)}
-                </p>
-              )}
+          {dMonto > 0 && (
+            <div style={{
+              background: 'rgba(192,132,252,0.08)', border: '1px solid rgba(192,132,252,0.2)',
+              borderRadius: 'var(--radius-md)', overflow: 'hidden',
+            }}>
+              {[
+                { label: 'Cuota mensual',   value: dCuota,    color: 'var(--debt)' },
+                { label: 'Total intereses', value: dIntereses, color: 'var(--expense)' },
+                { label: 'Total a pagar',   value: dCuota * dPlazo, color: 'var(--text-primary)' },
+              ].map((row, i, arr) => (
+                <div key={row.label} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '12px 16px',
+                  borderBottom: i < arr.length - 1 ? '1px solid rgba(192,132,252,0.15)' : 'none',
+                }}>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{row.label}</p>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '15px', color: row.color }}>
+                    {formatCOP(Math.round(row.value))}
+                  </p>
+                </div>
+              ))}
             </div>
+          )}
+
+          {/* Error */}
+          {addError && (
+            <p style={{ fontSize: '13px', color: 'var(--expense)', textAlign: 'center' }}>⚠️ {addError}</p>
           )}
 
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={handleAddDeuda}
-            disabled={!dTipo.trim() || !dDeudaInicial}
             style={{
               width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
-              background: dTipo.trim() && dDeudaInicial ? 'var(--debt)' : 'var(--bg-surface-3)',
-              color: dTipo.trim() && dDeudaInicial ? 'white' : 'var(--text-muted)',
-              fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, cursor: 'pointer',
+              background: addReady ? 'var(--debt)' : 'var(--bg-surface-3)',
+              color: addReady ? 'white' : 'var(--text-muted)',
+              fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px', cursor: 'pointer',
             }}
           >
             Registrar deuda
@@ -492,7 +534,7 @@ export default function Deudas() {
         </div>
       </Sheet>
 
-      {/* Sheet: editar deuda */}
+      {/* ── Sheet: editar deuda ──────────────────────────────── */}
       <Sheet open={!!editDeuda} onClose={() => setEditDeuda(null)} title="Editar deuda">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
@@ -518,26 +560,8 @@ export default function Deudas() {
             <input className="input-field" value={editTipo} onChange={e => setEditTipo(e.target.value)} />
           </div>
 
-          {/* Tasas guardadas (informativo) */}
-          {editDeuda?.tasaMV > 0 && (
-            <div style={{
-              display: 'flex', background: 'var(--bg-surface-2)',
-              border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflow: 'hidden',
-            }}>
-              <div style={{ flex: 1, padding: '10px 14px', textAlign: 'center' }}>
-                <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '3px' }}>TEA</p>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-secondary)', fontFamily: 'Space Grotesk, sans-serif' }}>
-                  {editDeuda.tasaEA != null ? `${editDeuda.tasaEA}%` : '—'}
-                </p>
-              </div>
-              <div style={{ width: '1px', background: 'var(--border)' }} />
-              <div style={{ flex: 1, padding: '10px 14px', textAlign: 'center' }}>
-                <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '3px' }}>TMV</p>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--debt)', fontFamily: 'Space Grotesk, sans-serif' }}>
-                  {formatPct(editDeuda.tasaMV)}
-                </p>
-              </div>
-            </div>
+          {editDeuda?.tasaEA != null && (
+            <TasasChip tasaEA={editDeuda.tasaEA} tasaMV={editDeuda.tasaMV} color="var(--debt)" />
           )}
 
           <div>
@@ -563,16 +587,16 @@ export default function Deudas() {
         </div>
       </Sheet>
 
-      {/* Sheet: registrar pago */}
+      {/* ── Sheet: registrar pago ────────────────────────────── */}
       <Sheet open={!!pagoDeuda} onClose={() => { setPagoDeuda(null); setMontoPago(0) }} title="Registrar pago">
         {pagoDeuda && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{
-              background: 'var(--bg-surface-2)', borderRadius: 'var(--radius-md)', padding: '12px 16px',
-              display: 'flex', justifyContent: 'space-between',
+              background: 'var(--bg-surface-2)', borderRadius: 'var(--radius-md)', padding: '14px 16px',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{pagoDeuda.emoji} {pagoDeuda.tipo}</p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: 'var(--debt)' }}>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', color: 'var(--debt)' }}>
                 {formatCOP(pagoDeuda.deudaActual)}
               </p>
             </div>
@@ -581,14 +605,13 @@ export default function Deudas() {
               <AmountInput value={montoPago} onChange={setMontoPago} autoFocus={!!pagoDeuda} />
             </div>
             {montoPago > 0 && (
-              <div style={{ background: 'var(--income-dim)', borderRadius: 'var(--radius-md)', padding: '10px 14px' }}>
+              <div style={{ background: 'var(--income-dim)', borderRadius: 'var(--radius-md)', padding: '12px 16px' }}>
                 <p style={{ fontSize: '13px', color: 'var(--income)' }}>
                   Saldo restante: <strong>{formatCOP(Math.max(0, pagoDeuda.deudaActual - montoPago))}</strong>
                 </p>
               </div>
             )}
             <motion.button whileTap={{ scale: 0.96 }} onClick={handlePago}
-              disabled={!montoPago}
               style={{
                 width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
                 background: montoPago ? 'var(--income)' : 'var(--bg-surface-3)',
