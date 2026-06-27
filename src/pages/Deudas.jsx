@@ -588,22 +588,28 @@ export default function Deudas() {
               ⚠️ {addError}
             </p>
           )}
+        </div>
 
-          {/* Separador + Botón */}
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
-            <motion.button
-              whileTap={{ scale: 0.96 }}
-              onClick={handleAddDeuda}
-              style={{
-                width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
-                background: addReady ? 'var(--debt)' : 'var(--bg-surface-3)',
-                color: addReady ? 'white' : 'var(--text-muted)',
-                fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', cursor: 'pointer',
-              }}
-            >
-              {addReady ? 'Registrar deuda' : 'Completa el formulario'}
-            </motion.button>
-          </div>
+        {/* Botón sticky — siempre visible aunque el teclado esté abierto */}
+        <div style={{
+          position: 'sticky', bottom: 0,
+          margin: '8px -20px -20px',
+          padding: '12px 20px 16px',
+          background: 'var(--bg-surface-2)',
+          borderTop: '1px solid var(--border)',
+        }}>
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={handleAddDeuda}
+            style={{
+              width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
+              background: addReady ? 'var(--debt)' : 'var(--bg-surface-3)',
+              color: addReady ? 'white' : 'var(--text-muted)',
+              fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px', cursor: 'pointer',
+            }}
+          >
+            {addReady ? 'Registrar deuda' : 'Completa el formulario'}
+          </motion.button>
         </div>
       </Sheet>
 
