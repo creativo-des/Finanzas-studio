@@ -12,7 +12,6 @@ import MonthSelector from '../components/dashboard/MonthSelector'
 import CategoryGrid from '../components/dashboard/CategoryGrid'
 import CategoryDonutChart from '../components/dashboard/CategoryDonutChart'
 import PaymentMethodsBreakdown from '../components/dashboard/PaymentMethodsBreakdown'
-import UpcomingSubscriptions from '../components/dashboard/UpcomingSubscriptions'
 import ProgressBar from '../components/ui/ProgressBar'
 
 
@@ -312,14 +311,13 @@ export default function Dashboard() {
 
           </div>
 
-          {/* ── Right: gráficas y suscripciones (each has own padding: 0 20px) ── */}
+          {/* ── Right: gráficas ── */}
           <div className="dash-col-aside">
             <CategoryDonutChart
               categorias={state.personal.presupuesto.categorias}
               transacciones={transacciones}
             />
             <PaymentMethodsBreakdown transacciones={transacciones} />
-            <UpcomingSubscriptions suscripciones={state.suscripciones} />
           </div>
 
         </div>

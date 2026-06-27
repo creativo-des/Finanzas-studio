@@ -19,7 +19,6 @@ const Dashboard         = lazy(() => import('./pages/Dashboard'))
 const Personal          = lazy(() => import('./pages/Personal'))
 const PersonalMes       = lazy(() => import('./pages/PersonalMes'))
 const Estudio           = lazy(() => import('./pages/Estudio'))
-const Suscripciones     = lazy(() => import('./pages/Suscripciones'))
 const Mas               = lazy(() => import('./pages/Mas'))
 const Deudas            = lazy(() => import('./pages/Deudas'))
 const Metas             = lazy(() => import('./pages/Metas'))
@@ -46,7 +45,6 @@ function AppRoutes() {
           <Route path="/personal"              element={<Personal />} />
           <Route path="/personal/mes/:num"     element={<PersonalMes />} />
           <Route path="/estudio"               element={mode === 'estudio' ? <Estudio /> : <Navigate to="/" replace />} />
-          <Route path="/suscripciones"         element={<Suscripciones />} />
           <Route path="/mas"                   element={<Mas />} />
           <Route path="/deudas"                element={<Deudas />} />
           <Route path="/metas"                 element={<Metas />} />
