@@ -141,27 +141,40 @@ export default function Deudas() {
   }
 
   const handleAddDeuda = () => {
-    if (!dTipo.trim()) { setAddError('Escribe el tipo de crédito'); return }
-    if (!dMonto)       { setAddError('Ingresa el monto del crédito'); return }
-    setAddError('')
-    dispatch({
-      type: ACTIONS.ADD_DEUDA,
-      payload: {
-        tipo: dTipo.trim(),
-        emoji: dEmoji,
-        deudaInicial: dMonto,
-        deudaActual: dMonto,
-        mensualidad: Math.round(dCuota),
-        tasaEA: parseFloat(dTeaFinal.toFixed(4)),
-        tasaMV: dTmv,
-        plazoMeses: dPlazo,
-        completado: 0,
-        modo,
-      },
-    })
-    haptic.success()
-    showToast({ message: 'Deuda registrada ✓' })
-    setAddOpen(false)
+    const tipo  = String(dTipo || '').trim()
+    const monto = Number(dMonto) || 0
+
+    if (!tipo)  { setAddError('Escribe el tipo de crédito'); return }
+    if (!monto) { setAddError('Ingresa el monto del crédito'); return }
+
+    const safeTea   = Number.isFinite(dTeaFinal) ? dTeaFinal : 0
+    const safeTmv   = Number.isFinite(dTmv)      ? dTmv      : 0
+    const safeCuota = Number.isFinite(dCuota) && dCuota > 0
+      ? Math.round(dCuota)
+      : Math.round(monto / (Number(dPlazo) || 12))
+
+    try {
+      dispatch({
+        type: ACTIONS.ADD_DEUDA,
+        payload: {
+          tipo,
+          emoji: dEmoji || '🏦',
+          deudaInicial: monto,
+          deudaActual:  monto,
+          mensualidad:  safeCuota,
+          tasaEA:       parseFloat(safeTea.toFixed(4)),
+          tasaMV:       safeTmv,
+          plazoMeses:   Number(dPlazo) || 12,
+          completado:   0,
+          modo:         mode || 'personal',
+        },
+      })
+      haptic.success()
+      showToast({ message: 'Deuda registrada ✓' })
+      setAddOpen(false)
+    } catch (err) {
+      setAddError(`Error: ${err.message}`)
+    }
   }
 
   const openEdit = (d) => {
@@ -278,7 +291,7 @@ export default function Deudas() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                   <span style={{ fontSize: '15px', fontWeight: 500 }}>{d.emoji} {d.tipo}</span>
                   <span className={`badge ${pagada ? 'badge-green' : 'badge-purple'}`}>
-                    {pagada ? '¡Pagada!' : `${d.completado.toFixed(1)}% pagado`}
+                    {pagada ? '¡Pagada!' : `${(d.completado ?? 0).toFixed(1)}% pagado`}
                   </span>
                 </div>
 

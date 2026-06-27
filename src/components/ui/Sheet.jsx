@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useIsDesktop } from '../../hooks/useIsDesktop'
@@ -56,7 +57,7 @@ export default function Sheet({ open, onClose, title, children, footer }) {
 
   const withKeyboard = keyboardOffset > 0
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -231,6 +232,7 @@ export default function Sheet({ open, onClose, title, children, footer }) {
           )}
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
