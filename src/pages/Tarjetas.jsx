@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { CreditCard, Wallet, Pencil, Trash2, Plus, Calendar, Percent } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
@@ -168,8 +168,9 @@ function TarjetaSheet({ open, onClose, tarjeta, onSave, onDelete }) {
   const [form, setForm] = useState(tarjeta || EMPTY)
   const isEditing = !!tarjeta
 
-  // Sync form when tarjeta prop changes
-  const reset = (tk) => setForm(tk || EMPTY)
+  useEffect(() => {
+    if (open) setForm(tarjeta || EMPTY)
+  }, [open, tarjeta])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
