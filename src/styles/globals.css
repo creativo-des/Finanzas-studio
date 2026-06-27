@@ -91,13 +91,16 @@
 html, body, #root {
   height: 100%;
   height: 100dvh;
-  overflow: hidden;
   background: var(--bg-base);
   color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   font-size: var(--text-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html, #root {
+  overflow: hidden;
 }
 
 /* ── App container ─────────────────────────────────────── */

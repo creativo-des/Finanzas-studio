@@ -40,11 +40,9 @@ export default function InstallBanner() {
           style={{
             position: 'fixed',
             bottom: 'calc(90px + env(safe-area-inset-bottom))',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 'calc(100% - 32px)',
-            maxWidth: '400px',
-            zIndex: 100,
+            left: '16px',
+            right: '16px',
+            zIndex: 9999,
           }}
         >
           {/* Banner */}
