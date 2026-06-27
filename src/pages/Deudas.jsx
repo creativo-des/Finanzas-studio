@@ -445,7 +445,34 @@ export default function Deudas() {
       </Sheet>
 
       {/* ── Sheet: nueva deuda ───────────────────────────────── */}
-      <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Nueva deuda">
+      <Sheet
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title="Nueva deuda"
+        footer={
+          <>
+            {addError && (
+              <p style={{ fontSize: '13px', color: 'var(--expense)', textAlign: 'center', fontWeight: 500, marginBottom: '10px' }}>
+                ⚠️ {addError}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={handleAddDeuda}
+              style={{
+                width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
+                background: addReady ? 'var(--debt)' : 'var(--bg-surface-3)',
+                color: addReady ? 'white' : 'var(--text-muted)',
+                fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px',
+                cursor: 'pointer', touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              {addReady ? 'Registrar deuda' : 'Completa el formulario'}
+            </button>
+          </>
+        }
+      >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* Ícono */}
@@ -582,37 +609,6 @@ export default function Deudas() {
             </div>
           )}
 
-        </div>
-
-        {/* Botón sticky — siempre visible aunque el teclado esté abierto */}
-        <div style={{
-          position: 'sticky', bottom: 0,
-          marginTop: '8px',
-          paddingTop: '12px',
-          background: 'var(--bg-surface-2)',
-          borderTop: '1px solid var(--border)',
-        }}>
-          {addError && (
-            <p style={{ fontSize: '13px', color: 'var(--expense)', textAlign: 'center', fontWeight: 500, marginBottom: '10px' }}>
-              ⚠️ {addError}
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={handleAddDeuda}
-            style={{
-              width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
-              background: addReady ? 'var(--debt)' : 'var(--bg-surface-3)',
-              color: addReady ? 'white' : 'var(--text-muted)',
-              fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px',
-              cursor: 'pointer', touchAction: 'manipulation',
-              WebkitTapHighlightColor: 'transparent',
-              transition: 'opacity 0.15s ease',
-              opacity: 1,
-            }}
-          >
-            {addReady ? 'Registrar deuda' : 'Completa el formulario'}
-          </button>
         </div>
       </Sheet>
 

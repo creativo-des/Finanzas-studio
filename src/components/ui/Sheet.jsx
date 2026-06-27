@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useIsDesktop } from '../../hooks/useIsDesktop'
 
-export default function Sheet({ open, onClose, title, children }) {
+export default function Sheet({ open, onClose, title, children, footer }) {
   const isDesktop = useIsDesktop()
   const [vpHeight, setVpHeight] = useState(
     () => window.visualViewport?.height ?? window.innerHeight
@@ -126,6 +126,15 @@ export default function Sheet({ open, onClose, title, children }) {
                 }}>
                   {children}
                 </div>
+                {footer && (
+                  <div style={{
+                    flexShrink: 0, padding: '16px 24px 20px',
+                    borderTop: '1px solid var(--border)',
+                    background: 'var(--bg-surface-2)',
+                  }}>
+                    {footer}
+                  </div>
+                )}
               </motion.div>
             </div>
           ) : (
@@ -201,12 +210,22 @@ export default function Sheet({ open, onClose, title, children }) {
                   flex: 1, overflowY: 'auto',
                   overscrollBehavior: 'contain',
                   padding: '20px',
-                  paddingBottom: withKeyboard
-                    ? '20px'
-                    : 'calc(20px + env(safe-area-inset-bottom))',
                 }}>
                   {children}
                 </div>
+                {footer && (
+                  <div style={{
+                    flexShrink: 0,
+                    padding: '12px 20px',
+                    paddingBottom: withKeyboard
+                      ? '12px'
+                      : 'calc(12px + env(safe-area-inset-bottom))',
+                    borderTop: '1px solid var(--border)',
+                    background: 'var(--bg-surface-2)',
+                  }}>
+                    {footer}
+                  </div>
+                )}
               </motion.div>
             </div>
           )}
