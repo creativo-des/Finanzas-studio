@@ -71,22 +71,47 @@ export default function AddTransactionSheet({ open, onClose, onSuccess, mes, ani
 
   const handleSubmit = () => {
     if (!monto || monto <= 0) return
+
+    const syncCard = metodo === 'Tarjeta Débito' && tarjetaId
+      ? tarjetas.find(t => t.id === tarjetaId)
+      : null
+
     if (isEdit) {
+      const oldSyncCard = transaction.cardSynced && transaction.metodo === 'Tarjeta Débito' && transaction.tarjetaId
+        ? tarjetas.find(t => t.id === transaction.tarjetaId)
+        : null
+
       dispatch({
         type: ACTIONS.UPDATE_TRANSACCION,
         id: transaction.id,
-        mes,
-        anio,
-        payload: { concepto: concepto || 'Sin concepto', categoria, monto, metodo, tarjetaId },
+        mes, anio,
+        payload: { concepto: concepto || 'Sin concepto', categoria, monto, metodo, tarjetaId, cardSynced: !!syncCard },
       })
+
+      if (oldSyncCard && syncCard) {
+        if (oldSyncCard.id === syncCard.id) {
+          const delta = transaction.monto - monto
+          if (delta !== 0) dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + delta } })
+        } else {
+          dispatch({ type: ACTIONS.UPDATE_TARJETA, id: oldSyncCard.id, payload: { saldoActual: (oldSyncCard.saldoActual || 0) + transaction.monto } })
+          dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) - monto } })
+        }
+      } else if (oldSyncCard && !syncCard) {
+        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: oldSyncCard.id, payload: { saldoActual: (oldSyncCard.saldoActual || 0) + transaction.monto } })
+      } else if (!oldSyncCard && syncCard) {
+        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) - monto } })
+      }
     } else {
       dispatch({
         type: ACTIONS.ADD_TRANSACCION,
-        mes,
-        anio,
-        payload: { concepto: concepto || 'Sin concepto', categoria, monto, metodo, tarjetaId },
+        mes, anio,
+        payload: { concepto: concepto || 'Sin concepto', categoria, monto, metodo, tarjetaId, cardSynced: !!syncCard },
       })
+      if (syncCard) {
+        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) - monto } })
+      }
     }
+
     haptic.success()
     if (!isEdit) reset()
     onSuccess?.()

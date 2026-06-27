@@ -220,6 +220,49 @@ export default function Dashboard() {
           porcentajeUsado={porcentajeReal}
         />
 
+        {/* ── Saldo en cuentas (tarjetas débito) ─────────── */}
+        {(() => {
+          const tarjetasDebito = state.personal.tarjetas.filter(t => t.tipo === 'debito')
+          if (tarjetasDebito.length === 0) return null
+          const totalSaldo = tarjetasDebito.reduce((sum, t) => sum + (t.saldoActual || 0), 0)
+          return (
+            <div style={{ padding: '0 20px' }}>
+              <div style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-xl)',
+                padding: '18px 20px',
+              }}>
+                <p className="label-uppercase" style={{ marginBottom: '10px' }}>Saldo en cuentas</p>
+                <p style={{
+                  fontFamily: 'Space Grotesk, sans-serif',
+                  fontWeight: 700, fontSize: '26px',
+                  color: totalSaldo >= 0 ? 'var(--income)' : 'var(--expense)',
+                  fontVariantNumeric: 'tabular-nums',
+                  marginBottom: tarjetasDebito.length > 1 ? '12px' : '0',
+                }}>
+                  {formatCOP(totalSaldo)}
+                </p>
+                {tarjetasDebito.length > 1 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {tarjetasDebito.map(t => (
+                      <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: t.color || 'var(--accent)', flexShrink: 0 }} />
+                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t.nombre}</span>
+                        </div>
+                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '13px', color: (t.saldoActual || 0) >= 0 ? 'var(--text-primary)' : 'var(--expense)', fontVariantNumeric: 'tabular-nums' }}>
+                          {formatCOP(t.saldoActual || 0)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* ── 2-col: main left / aside right ──────────────── */}
         <div className="dash-cols">
 

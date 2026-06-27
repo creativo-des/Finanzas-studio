@@ -63,12 +63,14 @@ export default function Personal() {
   const [editIngreso, setEditIngreso]   = useState(null)
   const [iFuente, setIFuente]           = useState('')
   const [iMonto, setIMonto]             = useState(0)
+  const [iTarjetaId, setITarjetaId]     = useState('')
 
   const { mesActual, anioActual } = state.config
   const totales = calcTotalesPersonal(state, mesActual, anioActual)
   const { transacciones, totalGastado } = calcTotalesMes(state, mesActual, anioActual)
   const disponibleReal = totales.totalIngresos - totalGastado
   const ingresosMes = state.personal.ingresosMensuales?.[anioActual]?.[mesActual] || []
+  const tarjetasDebito = state.personal.tarjetas.filter(t => t.tipo === 'debito')
 
   // ── Category ────────────────────────────────────────────
   const openEditCat = (key) => {
@@ -130,30 +132,54 @@ export default function Personal() {
   const closeBudgetSheet = () =>
     setBudgetSheet({ open: false, categoriaKey: null, item: null })
 
-  const handleDelete = (id) => {
+  const handleDelete = (id, tx) => {
     dispatch({ type: ACTIONS.DELETE_TRANSACCION, id, mes: mesActual, anio: anioActual })
+    if (tx?.cardSynced && tx.metodo === 'Tarjeta Débito' && tx.tarjetaId) {
+      const card = state.personal.tarjetas.find(t => t.id === tx.tarjetaId)
+      if (card) dispatch({ type: ACTIONS.UPDATE_TARJETA, id: card.id, payload: { saldoActual: (card.saldoActual || 0) + tx.monto } })
+    }
     showToast({ message: 'Gasto eliminado', type: 'error' })
   }
 
   // ── Income (monthly) ─────────────────────────────────────
   const openAddIngreso = () => {
-    setEditIngreso(null); setIFuente(''); setIMonto(0)
+    setEditIngreso(null); setIFuente(''); setIMonto(0); setITarjetaId('')
     setIngresoSheet(true)
   }
 
   const openEditIngreso = (ing) => {
-    setEditIngreso(ing); setIFuente(ing.fuente); setIMonto(ing.monto)
+    setEditIngreso(ing); setIFuente(ing.fuente); setIMonto(ing.monto); setITarjetaId(ing.tarjetaId || '')
     setIngresoSheet(true)
   }
 
   const handleSaveIngreso = () => {
     if (!iFuente.trim() || !iMonto) return
+    const syncCard = iTarjetaId ? tarjetasDebito.find(t => t.id === iTarjetaId) : null
     if (editIngreso) {
-      dispatch({ type: ACTIONS.UPDATE_INGRESO_MES, id: editIngreso.id, mes: mesActual, anio: anioActual, payload: { fuente: iFuente.trim(), monto: iMonto } })
+      const oldSyncCard = editIngreso.cardSynced && editIngreso.tarjetaId
+        ? tarjetasDebito.find(t => t.id === editIngreso.tarjetaId)
+        : null
+      dispatch({ type: ACTIONS.UPDATE_INGRESO_MES, id: editIngreso.id, mes: mesActual, anio: anioActual, payload: { fuente: iFuente.trim(), monto: iMonto, tarjetaId: iTarjetaId, cardSynced: !!syncCard } })
+      if (oldSyncCard && syncCard) {
+        if (oldSyncCard.id === syncCard.id) {
+          const delta = iMonto - editIngreso.monto
+          if (delta !== 0) dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + delta } })
+        } else {
+          dispatch({ type: ACTIONS.UPDATE_TARJETA, id: oldSyncCard.id, payload: { saldoActual: (oldSyncCard.saldoActual || 0) - editIngreso.monto } })
+          dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + iMonto } })
+        }
+      } else if (oldSyncCard && !syncCard) {
+        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: oldSyncCard.id, payload: { saldoActual: (oldSyncCard.saldoActual || 0) - editIngreso.monto } })
+      } else if (!oldSyncCard && syncCard) {
+        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + iMonto } })
+      }
       haptic.success()
       showToast({ message: 'Ingreso actualizado ✓' })
     } else {
-      dispatch({ type: ACTIONS.ADD_INGRESO_MES, mes: mesActual, anio: anioActual, payload: { fuente: iFuente.trim(), monto: iMonto } })
+      dispatch({ type: ACTIONS.ADD_INGRESO_MES, mes: mesActual, anio: anioActual, payload: { fuente: iFuente.trim(), monto: iMonto, tarjetaId: iTarjetaId, cardSynced: !!syncCard } })
+      if (syncCard) {
+        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + iMonto } })
+      }
       haptic.success()
       showToast({ message: 'Ingreso agregado ✓' })
     }
@@ -161,6 +187,10 @@ export default function Personal() {
   }
 
   const handleDeleteIngreso = () => {
+    if (editIngreso.cardSynced && editIngreso.tarjetaId) {
+      const card = state.personal.tarjetas.find(t => t.id === editIngreso.tarjetaId)
+      if (card) dispatch({ type: ACTIONS.UPDATE_TARJETA, id: card.id, payload: { saldoActual: (card.saldoActual || 0) - editIngreso.monto } })
+    }
     dispatch({ type: ACTIONS.DELETE_INGRESO_MES, id: editIngreso.id, mes: mesActual, anio: anioActual })
     haptic.light()
     showToast({ message: 'Ingreso eliminado', type: 'error' })
@@ -457,6 +487,14 @@ export default function Personal() {
                   <p style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)' }}>
                     {ing.fuente}
                   </p>
+                  {ing.tarjetaId && (() => {
+                    const card = tarjetasDebito.find(t => t.id === ing.tarjetaId)
+                    return card ? (
+                      <p style={{ fontSize: '11px', color: card.color || 'var(--accent)', marginTop: '2px' }}>
+                        → {card.nombre}
+                      </p>
+                    ) : null
+                  })()}
                   {ing.registradoEn && (
                     <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
                       {formatFechaHora(ing.registradoEn)}
@@ -587,6 +625,31 @@ export default function Personal() {
             <AmountInput value={iMonto} onChange={setIMonto} />
           </div>
 
+          {tarjetasDebito.length > 0 && (
+            <div>
+              <label className="input-label">¿A cuál cuenta llega? (opcional)</label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {tarjetasDebito.map(tk => (
+                  <motion.button
+                    key={tk.id}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setITarjetaId(iTarjetaId === tk.id ? '' : tk.id)}
+                    style={{
+                      padding: '10px 14px', borderRadius: 'var(--radius-md)',
+                      border: `1px solid ${iTarjetaId === tk.id ? (tk.color || 'var(--accent)') + '66' : 'var(--border)'}`,
+                      background: iTarjetaId === tk.id ? (tk.color || 'var(--accent)') + '22' : 'var(--bg-surface-3)',
+                      color: iTarjetaId === tk.id ? (tk.color || 'var(--accent)') : 'var(--text-secondary)',
+                      fontSize: '13px', fontWeight: iTarjetaId === tk.id ? 600 : 400,
+                      cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                    }}
+                  >
+                    {tk.nombre}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <motion.button whileTap={{ scale: 0.96 }} onClick={handleSaveIngreso}
             disabled={!iFuente.trim() || !iMonto}
             style={{ width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none', background: iFuente.trim() && iMonto ? 'var(--income)' : 'var(--bg-surface-3)', color: iFuente.trim() && iMonto ? 'white' : 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px', cursor: 'pointer' }}
@@ -610,7 +673,7 @@ export default function Personal() {
         onClose={() => setConfirmTx(null)}
         itemName={confirmTx?.concepto}
         onConfirm={() => {
-          handleDelete(confirmTx.id)
+          handleDelete(confirmTx.id, confirmTx)
           setConfirmTx(null)
         }}
       />
@@ -621,6 +684,10 @@ export default function Personal() {
         onClose={() => setConfirmIng(null)}
         itemName={confirmIng?.fuente}
         onConfirm={() => {
+          if (confirmIng.cardSynced && confirmIng.tarjetaId) {
+            const card = state.personal.tarjetas.find(t => t.id === confirmIng.tarjetaId)
+            if (card) dispatch({ type: ACTIONS.UPDATE_TARJETA, id: card.id, payload: { saldoActual: (card.saldoActual || 0) - confirmIng.monto } })
+          }
           dispatch({ type: ACTIONS.DELETE_INGRESO_MES, id: confirmIng.id, mes: mesActual, anio: anioActual })
           haptic.light()
           showToast({ message: 'Ingreso eliminado', type: 'error' })

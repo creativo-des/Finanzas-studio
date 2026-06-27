@@ -35,7 +35,12 @@ export default function PersonalMes() {
   const next = mesSiguiente(mes, anio)
 
   const handleDelete = (id) => {
+    const tx = transacciones.find(t => t.id === id)
     dispatch({ type: ACTIONS.DELETE_TRANSACCION, id, mes, anio })
+    if (tx?.cardSynced && tx.metodo === 'Tarjeta Débito' && tx.tarjetaId) {
+      const card = state.personal.tarjetas.find(t => t.id === tx.tarjetaId)
+      if (card) dispatch({ type: ACTIONS.UPDATE_TARJETA, id: card.id, payload: { saldoActual: (card.saldoActual || 0) + tx.monto } })
+    }
     showToast({ message: 'Gasto eliminado', type: 'error' })
   }
 
