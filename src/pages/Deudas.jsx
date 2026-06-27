@@ -477,7 +477,7 @@ export default function Deudas() {
             />
           </div>
 
-          {/* Monto — input directo sin formato de miles para evitar bugs en móvil */}
+          {/* Monto con separadores de miles */}
           <div>
             <label className="input-label">Monto del crédito</label>
             <div className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px' }}>
@@ -488,9 +488,10 @@ export default function Deudas() {
                 placeholder="0"
                 value={dMontoStr}
                 onChange={e => {
-                  const raw = e.target.value.replace(/\D/g, '')
-                  setDMontoStr(raw)
-                  setDMonto(Number(raw) || 0)
+                  const raw = e.target.value.replace(/\./g, '').replace(/\D/g, '')
+                  const num = raw ? parseInt(raw, 10) : 0
+                  setDMonto(num)
+                  setDMontoStr(num > 0 ? num.toLocaleString('es-CO') : '')
                   setAddError('')
                 }}
                 style={{
@@ -499,12 +500,10 @@ export default function Deudas() {
                   fontSize: '22px', color: 'var(--text-primary)', padding: 0, minWidth: 0,
                 }}
               />
+              {dMonto > 0 && (
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)', flexShrink: 0 }}>COP</span>
+              )}
             </div>
-            {dMonto > 0 && (
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', paddingLeft: '2px' }}>
-                {dMonto.toLocaleString('es-CO')} COP
-              </p>
-            )}
           </div>
 
           {/* Tasas + Plazo */}

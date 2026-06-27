@@ -78,8 +78,35 @@ export function FinanceProvider({ children, profileId, mode }) {
         if (row?.data) {
           const merged = mergeWithSeed(row.data)
           const needsReset = !merged.config.dataVersion || merged.config.dataVersion < 2
-          const toLoad = needsReset ? mergeWithSeed(null) : merged
+          let toLoad = needsReset ? mergeWithSeed(null) : merged
           if (needsReset) localStorage.removeItem(makeKey(profileId, mode))
+
+          // Preservar cambios locales que ocurrieron antes de que cloud cargara
+          // o que no alcanzaron a sincronizarse en la sesión anterior
+          const local = latestState.current
+          const mergeById = (cloudArr, localArr) => {
+            if (!localArr?.length) return cloudArr ?? []
+            const cloudIds = new Set((cloudArr ?? []).map(i => i.id))
+            const onlyLocal = localArr.filter(i => !cloudIds.has(i.id))
+            return [...(cloudArr ?? []), ...onlyLocal]
+          }
+          toLoad = {
+            ...toLoad,
+            personal: {
+              ...toLoad.personal,
+              deudas:   mergeById(toLoad.personal?.deudas,   local.personal?.deudas),
+              metas:    mergeById(toLoad.personal?.metas,    local.personal?.metas),
+              tarjetas: mergeById(toLoad.personal?.tarjetas, local.personal?.tarjetas),
+              patrimonio: {
+                ...toLoad.personal?.patrimonio,
+                activos: mergeById(
+                  toLoad.personal?.patrimonio?.activos,
+                  local.personal?.patrimonio?.activos
+                ),
+              },
+            },
+          }
+
           dispatch({ type: ACTIONS.IMPORT_DATA, data: toLoad })
           localStorage.setItem(makeKey(profileId, mode), JSON.stringify(toLoad))
         }
