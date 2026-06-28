@@ -71,6 +71,7 @@ export default function Personal() {
   const disponibleReal = totales.totalIngresos - totalGastado
   const ingresosMes = state.personal.ingresosMensuales?.[anioActual]?.[mesActual] || []
   const tarjetasDebito = state.personal.tarjetas.filter(t => t.tipo === 'debito')
+  const deudaActivas = (state.personal.deudas || []).filter(d => (d.deudaActual || 0) > 0)
 
   // ── Category ────────────────────────────────────────────
   const openEditCat = (key) => {
@@ -318,7 +319,14 @@ export default function Personal() {
           </div>
 
           {Object.entries(state.personal.presupuesto.categorias).map(([key, cat]) => {
-            const total = cat.presupuesto != null ? cat.presupuesto : cat.items.reduce((s, i) => s + i.monto / (i.duracionMeses || 1), 0)
+            const cuotasMensualidades = key === 'deudas'
+              ? deudaActivas.reduce((s, d) => s + (d.mensualidad || 0), 0)
+              : 0
+            const total = (cat.presupuesto != null
+              ? cat.presupuesto
+              : cat.items.reduce((s, i) => s + i.monto / (i.duracionMeses || 1), 0)
+            ) + cuotasMensualidades
+            const hasContent = cat.items.length > 0 || (key === 'deudas' && deudaActivas.length > 0)
             return (
               <div key={key} style={{
                 background: 'var(--bg-surface)', border: '1px solid var(--border)',
@@ -327,7 +335,7 @@ export default function Personal() {
                 <div style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '14px 16px', background: 'var(--bg-surface-2)',
-                  borderBottom: cat.items.length > 0 ? '1px solid var(--border)' : 'none',
+                  borderBottom: hasContent ? '1px solid var(--border)' : 'none',
                 }}>
                   {/* Nombre + editar categoría */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -408,7 +416,34 @@ export default function Personal() {
                   </motion.div>
                 ))}
 
-                {cat.items.length === 0 && (
+                {/* Cuotas de deudas registradas (solo lectura) */}
+                {key === 'deudas' && deudaActivas.length > 0 && (
+                  <>
+                    {cat.items.length > 0 && <div style={{ height: '1px', background: 'var(--border)' }} />}
+                    {deudaActivas.map((d, i) => (
+                      <div key={d.id} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '12px 16px',
+                        borderBottom: i < deudaActivas.length - 1 ? '1px solid var(--border)' : 'none',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: '15px', flexShrink: 0 }}>{d.emoji || '🏦'}</span>
+                          <div style={{ minWidth: 0 }}>
+                            <p style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {d.tipo}
+                            </p>
+                            <span className="badge badge-purple" style={{ fontSize: '9px', padding: '1px 5px' }}>Cuota auto</span>
+                          </div>
+                        </div>
+                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '14px', color: 'var(--expense)', fontVariantNumeric: 'tabular-nums', flexShrink: 0, marginLeft: '12px' }}>
+                          {formatCOP(d.mensualidad || 0)}
+                        </span>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {cat.items.length === 0 && !(key === 'deudas' && deudaActivas.length > 0) && (
                   <motion.div
                     whileTap={{ backgroundColor: 'var(--bg-surface-2)' }}
                     onClick={() => openBudgetEdit(key, null)}

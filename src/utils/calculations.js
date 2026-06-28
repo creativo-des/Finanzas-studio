@@ -2,12 +2,17 @@ export const calcTotalesPersonal = (state, mes, anio) => {
   const ingresosMes = state.personal.ingresosMensuales?.[anio]?.[mes] || []
   const totalIngresos = ingresosMes.reduce((s, i) => s + i.monto, 0)
 
+  const totalMensualidades = (state.personal.deudas || [])
+    .filter(d => (d.deudaActual || 0) > 0)
+    .reduce((s, d) => s + (d.mensualidad || 0), 0)
+
   // duracionMeses support: monthly cost = monto / duracionMeses
-  const totalPresupuesto = Object.values(state.personal.presupuesto.categorias)
-    .reduce((s, cat) => {
-      const catBudget = cat.presupuesto != null
+  const totalPresupuesto = Object.entries(state.personal.presupuesto.categorias)
+    .reduce((s, [key, cat]) => {
+      let catBudget = cat.presupuesto != null
         ? cat.presupuesto
         : cat.items.reduce((cs, i) => cs + i.monto / (i.duracionMeses || 1), 0)
+      if (key === 'deudas') catBudget += totalMensualidades
       return s + catBudget
     }, 0)
 
