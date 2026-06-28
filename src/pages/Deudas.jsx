@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Pencil, CircleDollarSign, Calculator, CheckCircle2 } from 'lucide-react'
+import { Plus, Pencil, CircleDollarSign, Calculator, CheckCircle2, PauseCircle, PlayCircle } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'
@@ -223,6 +223,14 @@ export default function Deudas() {
     setPagoDeuda(null); setMontoPago(0)
   }
 
+  const handleToggleDeuda = (d) => {
+    const activa = d.activa === false
+    dispatch({ type: ACTIONS.UPDATE_DEUDA, id: d.id, payload: { activa } })
+    haptic.light()
+    showToast({ message: activa ? 'Deuda activada ✓' : 'Deuda pausada' })
+    setEditDeuda(null)
+  }
+
   const handleCancelarDeuda = () => {
     if (!cancelDeuda) return
     dispatch({ type: ACTIONS.UPDATE_DEUDA, id: cancelDeuda.id, payload: { deudaActual: 0, completado: 100 } })
@@ -292,17 +300,19 @@ export default function Deudas() {
           {deudas.map(d => {
             const pct    = d.deudaInicial > 0 ? 100 - (d.deudaActual / d.deudaInicial) * 100 : 0
             const pagada = d.deudaActual <= 0
+            const activa = d.activa !== false
             return (
               <div key={d.id} style={{
                 background: 'var(--bg-surface)',
-                border: `1px solid ${pagada ? 'rgba(45,212,164,0.3)' : 'var(--border)'}`,
+                border: `1px solid ${pagada ? 'rgba(45,212,164,0.3)' : !activa ? 'rgba(245,183,49,0.35)' : 'var(--border)'}`,
                 borderRadius: 'var(--radius-lg)',
                 padding: '16px',
+                opacity: activa ? 1 : 0.65,
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                   <span style={{ fontSize: '15px', fontWeight: 500 }}>{d.emoji} {d.tipo}</span>
-                  <span className={`badge ${pagada ? 'badge-green' : 'badge-purple'}`}>
-                    {pagada ? '¡Pagada!' : `${(d.completado ?? 0).toFixed(1)}% pagado`}
+                  <span className={`badge ${pagada ? 'badge-green' : !activa ? 'badge-amber' : 'badge-purple'}`}>
+                    {pagada ? '¡Pagada!' : !activa ? 'Pausada' : `${(d.completado ?? 0).toFixed(1)}% pagado`}
                   </span>
                 </div>
 
@@ -695,6 +705,21 @@ export default function Deudas() {
             style={{ width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--accent)', color: 'white', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, cursor: 'pointer' }}
           >
             Guardar cambios
+          </motion.button>
+          <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleToggleDeuda(editDeuda)}
+            style={{
+              width: '100%', padding: '14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+              border: `1px solid ${editDeuda?.activa !== false ? 'rgba(245,183,49,0.35)' : 'rgba(79,158,248,0.35)'}`,
+              background: editDeuda?.activa !== false ? 'rgba(245,183,49,0.08)' : 'rgba(79,158,248,0.08)',
+              color: editDeuda?.activa !== false ? 'var(--warning)' : 'var(--accent)',
+              fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            }}
+          >
+            {editDeuda?.activa !== false
+              ? <><PauseCircle size={16} /> Pausar deuda</>
+              : <><PlayCircle size={16} /> Activar deuda</>
+            }
           </motion.button>
           <motion.button whileTap={{ scale: 0.96 }} onClick={handleDeleteDeuda}
             style={{ width: '100%', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--expense-dim)', background: 'var(--expense-dim)', color: 'var(--expense)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, cursor: 'pointer' }}

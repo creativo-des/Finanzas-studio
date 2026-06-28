@@ -3,7 +3,7 @@ export const calcTotalesPersonal = (state, mes, anio) => {
   const totalIngresos = ingresosMes.reduce((s, i) => s + i.monto, 0)
 
   const totalMensualidades = (state.personal.deudas || [])
-    .filter(d => (d.deudaActual || 0) > 0)
+    .filter(d => (d.deudaActual || 0) > 0 && d.activa !== false)
     .reduce((s, d) => s + (d.mensualidad || 0), 0)
 
   const totalInteresCredito = (state.personal.tarjetas || [])

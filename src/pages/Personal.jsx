@@ -71,7 +71,7 @@ export default function Personal() {
   const disponibleReal = totales.totalIngresos - totalGastado
   const ingresosMes = state.personal.ingresosMensuales?.[anioActual]?.[mesActual] || []
   const tarjetasDebito = state.personal.tarjetas.filter(t => t.tipo === 'debito')
-  const deudaActivas = (state.personal.deudas || []).filter(d => (d.deudaActual || 0) > 0)
+  const deudaActivas = (state.personal.deudas || []).filter(d => (d.deudaActual || 0) > 0 && d.activa !== false)
 
   // ── Category ────────────────────────────────────────────
   const openEditCat = (key) => {
