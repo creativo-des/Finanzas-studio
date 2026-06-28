@@ -322,11 +322,18 @@ export default function Personal() {
             const cuotasMensualidades = key === 'deudas'
               ? deudaActivas.reduce((s, d) => s + (d.mensualidad || 0), 0)
               : 0
+            const esTarjeta = (cat.nombre || '').toLowerCase().includes('tarjeta')
+            const tarjetasEnCat = esTarjeta
+              ? state.personal.tarjetas.filter(t => t.tipo === 'credito')
+              : []
+            const interesesCat = tarjetasEnCat.reduce((s, t) => s + Math.round((t.saldoActual || 0) * (t.tasa || 0) / 100), 0)
             const total = (cat.presupuesto != null
               ? cat.presupuesto
               : cat.items.reduce((s, i) => s + i.monto / (i.duracionMeses || 1), 0)
-            ) + cuotasMensualidades
-            const hasContent = cat.items.length > 0 || (key === 'deudas' && deudaActivas.length > 0)
+            ) + cuotasMensualidades + interesesCat
+            const hasContent = cat.items.length > 0
+              || (key === 'deudas' && deudaActivas.length > 0)
+              || (esTarjeta && tarjetasEnCat.length > 0)
             return (
               <div key={key} style={{
                 background: 'var(--bg-surface)', border: '1px solid var(--border)',
@@ -443,7 +450,43 @@ export default function Personal() {
                   </>
                 )}
 
-                {cat.items.length === 0 && !(key === 'deudas' && deudaActivas.length > 0) && (
+                {/* Tarjetas de crédito vinculadas (solo lectura) */}
+                {esTarjeta && tarjetasEnCat.length > 0 && (
+                  <>
+                    {cat.items.length > 0 && <div style={{ height: '1px', background: 'var(--border)' }} />}
+                    {tarjetasEnCat.map((t, i) => {
+                      const interesMes = Math.round((t.saldoActual || 0) * (t.tasa || 0) / 100)
+                      return (
+                        <div key={t.id} style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '12px 16px',
+                          borderBottom: i < tarjetasEnCat.length - 1 ? '1px solid var(--border)' : 'none',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: t.color || 'var(--accent)', flexShrink: 0 }} />
+                            <div style={{ minWidth: 0 }}>
+                              <p style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {t.nombre}
+                              </p>
+                              <div style={{ display: 'flex', gap: '4px', marginTop: '2px', alignItems: 'center' }}>
+                                <span className="badge badge-blue" style={{ fontSize: '9px', padding: '1px 5px' }}>T. Crédito</span>
+                                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Deuda: {formatCOP(t.saldoActual || 0)}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '12px' }}>
+                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '14px', color: interesMes > 0 ? 'var(--expense)' : 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                              {interesMes > 0 ? formatCOP(interesMes) : '—'}
+                            </span>
+                            {interesMes > 0 && <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '1px' }}>interés / mes</p>}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </>
+                )}
+
+                {cat.items.length === 0 && !(key === 'deudas' && deudaActivas.length > 0) && !(esTarjeta && tarjetasEnCat.length > 0) && (
                   <motion.div
                     whileTap={{ backgroundColor: 'var(--bg-surface-2)' }}
                     onClick={() => openBudgetEdit(key, null)}
