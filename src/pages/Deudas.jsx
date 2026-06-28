@@ -88,6 +88,8 @@ export default function Deudas() {
   const deudas   = state.personal.deudas.filter(d => (d.modo ?? 'personal') === mode)
   const tarjetas = state.personal.tarjetas.filter(t => t.tipo === 'credito')
   const totalDeuda = calcTotalDeudas(deudas)
+  const totalTarjetasDeuda = tarjetas.reduce((s, t) => s + (t.saldoActual || 0), 0)
+  const totalDeudaGlobal = totalDeuda + totalTarjetasDeuda
 
   // ── Add ──────────────────────────────────────────────────────
   const [addOpen, setAddOpen]     = useState(false)
@@ -253,12 +255,26 @@ export default function Deudas() {
         }}>
           <p className="label-uppercase" style={{ marginBottom: '8px' }}>Deuda total</p>
           <NumberAnimated
-            value={totalDeuda}
+            value={totalDeudaGlobal}
             style={{
               fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '40px',
               color: 'var(--debt)', display: 'block', marginBottom: '8px',
             }}
           />
+          {(totalDeuda > 0 || totalTarjetasDeuda > 0) && (
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
+              {totalDeuda > 0 && (
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Créditos: <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{formatCOP(totalDeuda)}</span>
+                </p>
+              )}
+              {totalTarjetasDeuda > 0 && (
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Tarjetas: <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{formatCOP(totalTarjetasDeuda)}</span>
+                </p>
+              )}
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
               {deudas.reduce((s, d) => s + d.mensualidad, 0) > 0
