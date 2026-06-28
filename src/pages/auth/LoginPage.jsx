@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, LogIn } from 'lucide-react'
+import { Eye, EyeOff, LogIn, Lock } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useRateLimit } from '../../hooks/useRateLimit'
 
 const pageIn = {
   initial: { opacity: 0, y: 20 },
@@ -16,14 +17,18 @@ export default function LoginPage({ onShowRegister }) {
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState(null)
 
+  const { isLocked, lockMessage, onFailure, onSuccess } = useRateLimit('login')
+
   const handleSubmit = async (e) => {
     e?.preventDefault()
-    if (!email.trim() || !password) return
+    if (!email.trim() || !password || isLocked) return
     setLoading(true)
     setError(null)
     try {
       await signIn({ email, password })
+      onSuccess()
     } catch (err) {
+      onFailure()
       const msg = err.message || 'Error al iniciar sesión'
       if (msg.includes('Invalid login')) setError('Email o contraseña incorrectos')
       else if (msg.includes('Email not confirmed')) setError('Confirma tu email antes de entrar')
@@ -106,33 +111,36 @@ export default function LoginPage({ onShowRegister }) {
             </div>
           </div>
 
-          {error && (
+          {(lockMessage || error) && (
             <div style={{
               padding: '12px 14px', borderRadius: 'var(--radius-md)',
-              background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
-              fontSize: '13px', color: '#f87171',
+              background: lockMessage ? 'rgba(245,183,49,0.1)' : 'rgba(239,68,68,0.12)',
+              border: `1px solid ${lockMessage ? 'rgba(245,183,49,0.35)' : 'rgba(239,68,68,0.3)'}`,
+              fontSize: '13px', color: lockMessage ? '#f5b731' : '#f87171',
+              display: 'flex', alignItems: 'center', gap: '8px',
             }}>
-              {error}
+              {lockMessage && <Lock size={13} />}
+              {lockMessage || error}
             </div>
           )}
 
           <motion.button
             whileTap={{ scale: 0.97 }}
             type="submit"
-            disabled={loading || !email.trim() || !password}
+            disabled={loading || !email.trim() || !password || isLocked}
             style={{
               width: '100%', padding: '15px',
               borderRadius: 'var(--radius-lg)', border: 'none',
-              background: (loading || !email.trim() || !password) ? 'var(--bg-surface-3)' : 'var(--accent)',
-              color: (loading || !email.trim() || !password) ? 'var(--text-muted)' : 'white',
+              background: (loading || !email.trim() || !password || isLocked) ? 'var(--bg-surface-3)' : 'var(--accent)',
+              color: (loading || !email.trim() || !password || isLocked) ? 'var(--text-muted)' : 'white',
               fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px',
-              cursor: (loading || !email.trim() || !password) ? 'not-allowed' : 'pointer',
+              cursor: (loading || !email.trim() || !password || isLocked) ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
               marginTop: '4px',
             }}
           >
-            <LogIn size={17} />
-            {loading ? 'Entrando...' : 'Entrar'}
+            {isLocked ? <Lock size={17} /> : <LogIn size={17} />}
+            {loading ? 'Entrando...' : isLocked ? 'Bloqueado' : 'Entrar'}
           </motion.button>
         </form>
 

@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Eye, EyeOff, UserPlus, CheckCircle, Camera, User } from 'lucide-react'
+import { Eye, EyeOff, UserPlus, CheckCircle, Camera, User, Lock } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useRateLimit } from '../../hooks/useRateLimit'
 
 const pageIn = {
   initial: { opacity: 0, y: 20 },
@@ -18,6 +19,8 @@ export default function RegisterPage({ onShowLogin }) {
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState(null)
   const [success, setSuccess]   = useState(false)
+
+  const { isLocked, lockMessage, onFailure, onSuccess: onRlSuccess } = useRateLimit('register')
 
   // Foto de perfil
   const [photoFile, setPhotoFile] = useState(null)
@@ -38,13 +41,15 @@ export default function RegisterPage({ onShowLogin }) {
 
   const handleRegister = async (e) => {
     e?.preventDefault()
-    if (!email.trim() || password.length < 6) return
+    if (!email.trim() || password.length < 6 || isLocked) return
     setLoading(true)
     setError(null)
     try {
       await signUp({ email, password, nombre, emoji: '🧑' })
+      onRlSuccess()
       setSuccess(true)
     } catch (err) {
+      onFailure()
       const msg = err.message || 'Error al crear cuenta'
       if (msg.includes('already registered')) setError('Este email ya está registrado')
       else if (msg.includes('Password should be at least')) setError('La contraseña debe tener al menos 6 caracteres')
@@ -275,33 +280,36 @@ export default function RegisterPage({ onShowLogin }) {
                 </div>
               </div>
 
-              {error && (
+              {(lockMessage || error) && (
                 <div style={{
                   padding: '12px 14px', borderRadius: 'var(--radius-md)',
-                  background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
-                  fontSize: '13px', color: '#f87171',
+                  background: lockMessage ? 'rgba(245,183,49,0.1)' : 'rgba(239,68,68,0.12)',
+                  border: `1px solid ${lockMessage ? 'rgba(245,183,49,0.35)' : 'rgba(239,68,68,0.3)'}`,
+                  fontSize: '13px', color: lockMessage ? '#f5b731' : '#f87171',
+                  display: 'flex', alignItems: 'center', gap: '8px',
                 }}>
-                  {error}
+                  {lockMessage && <Lock size={13} />}
+                  {lockMessage || error}
                 </div>
               )}
 
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 type="submit"
-                disabled={loading || !email.trim() || password.length < 6}
+                disabled={loading || !email.trim() || password.length < 6 || isLocked}
                 style={{
                   width: '100%', padding: '15px',
                   borderRadius: 'var(--radius-lg)', border: 'none',
-                  background: (loading || !email.trim() || password.length < 6) ? 'var(--bg-surface-3)' : 'var(--accent)',
-                  color: (loading || !email.trim() || password.length < 6) ? 'var(--text-muted)' : 'white',
+                  background: (loading || !email.trim() || password.length < 6 || isLocked) ? 'var(--bg-surface-3)' : 'var(--accent)',
+                  color: (loading || !email.trim() || password.length < 6 || isLocked) ? 'var(--text-muted)' : 'white',
                   fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '16px',
-                  cursor: (loading || !email.trim() || password.length < 6) ? 'not-allowed' : 'pointer',
+                  cursor: (loading || !email.trim() || password.length < 6 || isLocked) ? 'not-allowed' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   marginTop: '4px',
                 }}
               >
-                <UserPlus size={17} />
-                {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+                {isLocked ? <Lock size={17} /> : <UserPlus size={17} />}
+                {loading ? 'Creando cuenta...' : isLocked ? 'Bloqueado' : 'Crear cuenta'}
               </motion.button>
             </form>
           </motion.div>
