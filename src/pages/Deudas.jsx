@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Pencil, CircleDollarSign, Calculator } from 'lucide-react'
+import { Plus, Pencil, CircleDollarSign, Calculator, CheckCircle2 } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'
@@ -122,6 +122,9 @@ export default function Deudas() {
   const [pagoDeuda, setPagoDeuda] = useState(null)
   const [montoPago, setMontoPago] = useState(0)
 
+  // ── Cancelar ─────────────────────────────────────────────────
+  const [cancelDeuda, setCancelDeuda] = useState(null)
+
   // ── Simulador ────────────────────────────────────────────────
   const [simOpen, setSimOpen]   = useState(false)
   const [simMonto, setSimMonto] = useState(0)
@@ -218,6 +221,14 @@ export default function Deudas() {
     haptic.success()
     showToast({ message: `Pago de ${formatCOP(montoPago)} registrado ✓` })
     setPagoDeuda(null); setMontoPago(0)
+  }
+
+  const handleCancelarDeuda = () => {
+    if (!cancelDeuda) return
+    dispatch({ type: ACTIONS.UPDATE_DEUDA, id: cancelDeuda.id, payload: { deudaActual: 0, completado: 100 } })
+    haptic.success()
+    showToast({ message: `${cancelDeuda.emoji} ${cancelDeuda.tipo} cancelada ✓` })
+    setCancelDeuda(null)
   }
 
   // ── Render ───────────────────────────────────────────────────
@@ -329,6 +340,21 @@ export default function Deudas() {
                       }}
                     >
                       <CircleDollarSign size={13} /> Registrar pago
+                    </motion.button>
+                  )}
+                  {!pagada && (
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setCancelDeuda(d)}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+                        padding: '9px 12px', borderRadius: 'var(--radius-md)',
+                        border: '1px solid rgba(45,212,164,0.35)', background: 'rgba(45,212,164,0.08)',
+                        color: 'var(--income)', fontSize: '12px', fontWeight: 600,
+                        cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      }}
+                    >
+                      <CheckCircle2 size={13} /> Cancelar
                     </motion.button>
                   )}
                   <motion.button
@@ -711,6 +737,54 @@ export default function Deudas() {
               }}
             >
               Confirmar pago
+            </motion.button>
+          </div>
+        )}
+      </Sheet>
+
+      {/* ── Sheet: confirmar cancelación ─────────────────── */}
+      <Sheet open={!!cancelDeuda} onClose={() => setCancelDeuda(null)} title="Cancelar deuda">
+        {cancelDeuda && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{
+              background: 'var(--income-dim)', border: '1px solid rgba(45,212,164,0.3)',
+              borderRadius: 'var(--radius-xl)', padding: '20px', textAlign: 'center',
+            }}>
+              <p style={{ fontSize: '32px', marginBottom: '8px' }}>{cancelDeuda.emoji}</p>
+              <p style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+                {cancelDeuda.tipo}
+              </p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '24px', color: 'var(--income)' }}>
+                {formatCOP(cancelDeuda.deudaActual)}
+              </p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>pendiente</p>
+            </div>
+
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.6 }}>
+              ¿Confirmas que esta deuda fue <strong style={{ color: 'var(--text-primary)' }}>cancelada o pagada</strong> en su totalidad?
+            </p>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center' }}>
+              El saldo quedará en $0 y se marcará como pagada al 100%. El registro permanecerá visible.
+            </p>
+
+            <motion.button whileTap={{ scale: 0.96 }} onClick={handleCancelarDeuda}
+              style={{
+                width: '100%', padding: '16px', borderRadius: 'var(--radius-md)', border: 'none',
+                background: 'var(--income)', color: 'white',
+                fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              }}
+            >
+              <CheckCircle2 size={18} /> Sí, cancelar deuda
+            </motion.button>
+            <motion.button whileTap={{ scale: 0.96 }} onClick={() => setCancelDeuda(null)}
+              style={{
+                width: '100%', padding: '14px', borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border)', background: 'transparent',
+                color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif', fontWeight: 500, cursor: 'pointer',
+              }}
+            >
+              Volver
             </motion.button>
           </div>
         )}
