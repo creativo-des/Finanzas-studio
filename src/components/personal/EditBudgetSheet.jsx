@@ -7,6 +7,7 @@ import Toggle from '../ui/Toggle'
 import { useFinance } from '../../context/FinanceContext'
 import { ACTIONS } from '../../context/actions'
 import { useHaptic } from '../../hooks/useHaptic'
+import { sanitizeText, sanitizeAmount, sanitizeInt } from '../../utils/sanitize'
 
 const NOMBRES_CAT = {
   casa: 'Casa', comida: 'Comida', familia: 'Familia', transporte: 'Transporte',
@@ -41,20 +42,23 @@ export default function EditBudgetSheet({ open, onClose, categoriaKey, item, onS
   }, [open, item])
 
   const handleSubmit = () => {
-    if (!nombre.trim() || monto <= 0) return
+    const nombreClean   = sanitizeText(nombre, 80)
+    const montoClean    = sanitizeAmount(monto, 1)
+    const duracionClean = sanitizeInt(duracionMeses, 1, 60)
+    if (!nombreClean || !montoClean) return
 
     if (isEditing) {
       dispatch({
         type: ACTIONS.UPDATE_ITEM_CATEGORIA,
         categoria: categoriaKey,
         id: item.id,
-        payload: { nombre: nombre.trim(), monto, duracionMeses, fijo, tarjeta, hormiga },
+        payload: { nombre: nombreClean, monto: montoClean, duracionMeses: duracionClean, fijo, tarjeta, hormiga },
       })
     } else {
       dispatch({
         type: ACTIONS.ADD_ITEM_CATEGORIA,
         categoria: categoriaKey,
-        payload: { nombre: nombre.trim(), monto, duracionMeses, fijo, tarjeta, hormiga },
+        payload: { nombre: nombreClean, monto: montoClean, duracionMeses: duracionClean, fijo, tarjeta, hormiga },
       })
     }
 
@@ -87,6 +91,7 @@ export default function EditBudgetSheet({ open, onClose, categoriaKey, item, onS
             className="input-field"
             type="text"
             placeholder="Ej: Arriendo, supermercado..."
+            maxLength={80}
             value={nombre}
             onChange={e => setNombre(e.target.value)}
             autoFocus={open}

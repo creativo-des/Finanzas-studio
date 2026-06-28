@@ -4,6 +4,7 @@ import { CreditCard, Wallet, Pencil, Trash2, Plus, Calendar, Percent } from 'luc
 import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { formatCOP } from '../utils/formatCurrency'
+import { sanitizeText, sanitizeAmount, sanitizePercent, sanitizeDay } from '../utils/sanitize'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import Sheet from '../components/ui/Sheet'
@@ -228,11 +229,11 @@ function TarjetaSheet({ open, onClose, tarjeta, onSave, onDelete }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           <div>
             <label className="input-label">Banco</label>
-            <input className="input-field" value={form.banco} onChange={e => set('banco', e.target.value)} placeholder="Av Villas..." />
+            <input className="input-field" value={form.banco} maxLength={50} onChange={e => set('banco', e.target.value)} placeholder="Av Villas..." />
           </div>
           <div>
             <label className="input-label">Nombre</label>
-            <input className="input-field" value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="Mi tarjeta..." />
+            <input className="input-field" value={form.nombre} maxLength={50} onChange={e => set('nombre', e.target.value)} placeholder="Mi tarjeta..." />
           </div>
         </div>
 
@@ -336,11 +337,22 @@ export default function Tarjetas() {
   const closeSheet = () => setSheet({ open: false, tarjeta: null })
 
   const handleSave = (form) => {
+    const clean = {
+      ...form,
+      banco:      sanitizeText(form.banco, 50),
+      nombre:     sanitizeText(form.nombre, 50),
+      saldoActual: sanitizeAmount(form.saldoActual, 0),
+      limite:      sanitizeAmount(form.limite, 0),
+      tasa:        sanitizePercent(form.tasa, 30),
+      fechaCorte:  sanitizeDay(form.fechaCorte),
+      fechaPago:   sanitizeDay(form.fechaPago),
+    }
+    if (!clean.banco || !clean.nombre) return
     if (sheet.tarjeta) {
-      dispatch({ type: ACTIONS.UPDATE_TARJETA, id: sheet.tarjeta.id, payload: form })
+      dispatch({ type: ACTIONS.UPDATE_TARJETA, id: sheet.tarjeta.id, payload: clean })
       showToast({ message: 'Tarjeta actualizada ✓' })
     } else {
-      dispatch({ type: ACTIONS.ADD_TARJETA, payload: form })
+      dispatch({ type: ACTIONS.ADD_TARJETA, payload: clean })
       showToast({ message: 'Tarjeta agregada ✓' })
     }
     haptic.success()

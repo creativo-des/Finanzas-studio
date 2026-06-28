@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'
 import { calcTotalDeudas, calcAmortizacion } from '../utils/calculations'
 import { formatCOP } from '../utils/formatCurrency'
+import { sanitizeText, sanitizeAmount } from '../utils/sanitize'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import ProgressBar from '../components/ui/ProgressBar'
@@ -146,8 +147,8 @@ export default function Deudas() {
   }
 
   const handleAddDeuda = () => {
-    const tipo  = String(dTipo || '').trim()
-    const monto = Number(dMonto) || 0
+    const tipo  = sanitizeText(dTipo, 80)
+    const monto = sanitizeAmount(dMonto, 1)
 
     if (!tipo)  { setAddError('Escribe el tipo de crédito'); return }
     if (!monto) { setAddError('Ingresa el monto del crédito'); return }
@@ -188,14 +189,17 @@ export default function Deudas() {
   }
 
   const handleUpdateDeuda = () => {
-    if (!editTipo.trim()) return
+    const tipoClean = sanitizeText(editTipo, 80)
+    if (!tipoClean) return
+    const safeDeudaActual = sanitizeAmount(editDeudaActual, 0)
+    const safeMensualidad = sanitizeAmount(editMensualidad, 0)
     const completado = editDeuda.deudaInicial > 0
-      ? Math.round(((editDeuda.deudaInicial - editDeudaActual) / editDeuda.deudaInicial) * 1000) / 10
+      ? Math.round(((editDeuda.deudaInicial - safeDeudaActual) / editDeuda.deudaInicial) * 1000) / 10
       : 0
     dispatch({
       type: ACTIONS.UPDATE_DEUDA,
       id: editDeuda.id,
-      payload: { tipo: editTipo.trim(), emoji: editEmoji, deudaActual: editDeudaActual, mensualidad: editMensualidad, completado },
+      payload: { tipo: tipoClean, emoji: editEmoji, deudaActual: safeDeudaActual, mensualidad: safeMensualidad, completado },
     })
     haptic.success()
     showToast({ message: 'Deuda actualizada ✓' })
@@ -564,6 +568,7 @@ export default function Deudas() {
             <input
               className="input-field"
               value={dTipo}
+              maxLength={80}
               onChange={e => { setDTipo(e.target.value); setAddError('') }}
               placeholder="Ej: Crédito tecnología, hipotecario..."
             />
@@ -700,7 +705,7 @@ export default function Deudas() {
 
           <div>
             <label className="input-label">Tipo de crédito</label>
-            <input className="input-field" value={editTipo} onChange={e => setEditTipo(e.target.value)} />
+            <input className="input-field" value={editTipo} maxLength={80} onChange={e => setEditTipo(e.target.value)} />
           </div>
 
           {editDeuda?.tasaEA != null && (

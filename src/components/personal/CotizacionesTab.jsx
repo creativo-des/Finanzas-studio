@@ -4,6 +4,7 @@ import { Plus, Pencil, Minus } from 'lucide-react'
 import { useFinance } from '../../context/FinanceContext'
 import { ACTIONS } from '../../context/actions'
 import { formatCOP } from '../../utils/formatCurrency'
+import { sanitizeText, sanitizeAmount, sanitizeInt } from '../../utils/sanitize'
 import Sheet from '../ui/Sheet'
 import AmountInput from '../ui/AmountInput'
 import Toast from '../ui/Toast'
@@ -42,12 +43,13 @@ export default function CotizacionesTab() {
   }
 
   const handleSaveProyecto = () => {
-    if (!pNombre.trim()) return
+    const nombreClean = sanitizeText(pNombre, 80)
+    if (!nombreClean) return
     if (editProyecto) {
-      dispatch({ type: ACTIONS.UPDATE_COTIZACION, id: editProyecto.id, payload: { nombre: pNombre.trim(), emoji: pEmoji } })
+      dispatch({ type: ACTIONS.UPDATE_COTIZACION, id: editProyecto.id, payload: { nombre: nombreClean, emoji: pEmoji } })
       showToast({ message: 'Proyecto actualizado ✓' })
     } else {
-      dispatch({ type: ACTIONS.ADD_COTIZACION, payload: { nombre: pNombre.trim(), emoji: pEmoji, meses: 12 } })
+      dispatch({ type: ACTIONS.ADD_COTIZACION, payload: { nombre: nombreClean, emoji: pEmoji, meses: 12 } })
       haptic.success()
       showToast({ message: 'Proyecto creado ✓' })
     }
@@ -62,7 +64,7 @@ export default function CotizacionesTab() {
   }
 
   const updateMeses = (id, val) => {
-    dispatch({ type: ACTIONS.UPDATE_COTIZACION, id, payload: { meses: Math.max(1, val) } })
+    dispatch({ type: ACTIONS.UPDATE_COTIZACION, id, payload: { meses: sanitizeInt(val, 1, 600) } })
   }
 
   // ── Item ──────────────────────────────────────────────
@@ -79,8 +81,10 @@ export default function CotizacionesTab() {
   }
 
   const handleSaveItem = () => {
-    if (!iNombre.trim() || !iPrecio) return
-    const payload = { nombre: iNombre.trim(), precio: iPrecio }
+    const nombreClean = sanitizeText(iNombre, 80)
+    const precioClean = sanitizeAmount(iPrecio, 1)
+    if (!nombreClean || !precioClean) return
+    const payload = { nombre: nombreClean, precio: precioClean }
     if (editItem) {
       dispatch({ type: ACTIONS.UPDATE_ITEM_COT, cotizacionId: itemProjId, id: editItem.id, payload })
       showToast({ message: 'Ítem actualizado ✓' })
@@ -286,12 +290,12 @@ export default function CotizacionesTab() {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
             <div>
               <label className="input-label">Ícono</label>
-              <input className="input-field" value={pEmoji} onChange={e => setPEmoji(e.target.value)}
+              <input className="input-field" value={pEmoji} maxLength={5} onChange={e => setPEmoji(e.target.value)}
                 style={{ width: '64px', textAlign: 'center', fontSize: '24px' }} />
             </div>
             <div style={{ flex: 1 }}>
               <label className="input-label">Nombre del proyecto</label>
-              <input className="input-field" value={pNombre} onChange={e => setPNombre(e.target.value)}
+              <input className="input-field" value={pNombre} maxLength={80} onChange={e => setPNombre(e.target.value)}
                 placeholder="Sofá sala, MacBook Air..." />
             </div>
           </div>
@@ -323,7 +327,7 @@ export default function CotizacionesTab() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
             <label className="input-label">Nombre del ítem</label>
-            <input className="input-field" value={iNombre} onChange={e => setINombre(e.target.value)}
+            <input className="input-field" value={iNombre} maxLength={80} onChange={e => setINombre(e.target.value)}
               placeholder="Sofá 3 puestos, MacBook Air..." />
           </div>
           <div>

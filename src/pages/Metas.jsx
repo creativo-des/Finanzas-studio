@@ -5,6 +5,7 @@ import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
 import { ACTIONS } from '../context/actions'
 import { formatCOP } from '../utils/formatCurrency'
+import { sanitizeText, sanitizeAmount, sanitizeInt, sanitizePercent } from '../utils/sanitize'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import ProgressBar from '../components/ui/ProgressBar'
@@ -56,11 +57,16 @@ export default function Metas() {
   }
 
   const handleAdd = () => {
-    if (!nombre || !metaTotal) return
-    const mensualidadNecesaria = Math.round(calcMensualidad(metaTotal, tmv, meses))
+    const nombreClean  = sanitizeText(nombre, 80)
+    const metaClean    = sanitizeAmount(metaTotal, 1)
+    const mesesClean   = sanitizeInt(meses, 1, 600)
+    const teaClean     = sanitizePercent(tea, 200)
+    if (!nombreClean || !metaClean) return
+    const safeTmv = teaToTmv(teaClean)
+    const mensualidadNecesaria = Math.round(calcMensualidad(metaClean, safeTmv, mesesClean))
     dispatch({
       type: ACTIONS.ADD_META,
-      payload: { nombre, emoji, metaTotal, mesesPlan: meses, tasaEA: tea, tasaMV: tmv, mensualidadNecesaria, modo },
+      payload: { nombre: nombreClean, emoji, metaTotal: metaClean, mesesPlan: mesesClean, tasaEA: teaClean, tasaMV: safeTmv, mensualidadNecesaria, modo },
     })
     haptic.success()
     showToast({ message: `Meta "${nombre}" creada ✓` })
@@ -248,13 +254,14 @@ export default function Metas() {
               <input
                 className="input-field"
                 value={emoji}
+                maxLength={5}
                 onChange={e => setEmoji(e.target.value)}
                 style={{ width: '60px', textAlign: 'center', fontSize: '24px' }}
               />
             </div>
             <div style={{ flex: 1 }}>
               <label className="input-label">Nombre</label>
-              <input className="input-field" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Vacaciones, auto..." />
+              <input className="input-field" value={nombre} maxLength={80} onChange={e => setNombre(e.target.value)} placeholder="Vacaciones, auto..." />
             </div>
           </div>
 

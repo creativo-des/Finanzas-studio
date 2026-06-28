@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { ACTIONS } from '../context/actions'
 import { seedData } from '../utils/seedData'
+import { sanitizeText } from '../utils/sanitize'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import Toggle from '../components/ui/Toggle'
@@ -101,6 +102,12 @@ export default function Ajustes() {
       reader.onload = (ev) => {
         try {
           const data = JSON.parse(ev.target.result)
+          if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+            showToast({ message: 'Archivo inválido', type: 'error' }); return
+          }
+          if (!data.personal || !data.config) {
+            showToast({ message: 'El archivo no es un backup válido', type: 'error' }); return
+          }
           dispatch({ type: ACTIONS.IMPORT_DATA, data })
           showToast({ message: 'Datos importados ✓' })
         } catch {
@@ -135,7 +142,9 @@ export default function Ajustes() {
   }
 
   const saveNombre = () => {
-    dispatch({ type: ACTIONS.SET_CONFIG, payload: { nombre } })
+    const clean = sanitizeText(nombre, 60)
+    if (!clean) return
+    dispatch({ type: ACTIONS.SET_CONFIG, payload: { nombre: clean } })
     showToast({ message: 'Nombre guardado ✓' })
   }
 
@@ -231,6 +240,7 @@ export default function Ajustes() {
             <input
               className="input-field"
               value={nombre}
+              maxLength={60}
               onChange={e => setNombre(e.target.value)}
               onBlur={saveNombre}
               onKeyDown={e => e.key === 'Enter' && saveNombre()}

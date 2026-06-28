@@ -6,6 +6,7 @@ import AmountInput from '../ui/AmountInput'
 import { useFinance } from '../../context/FinanceContext'
 import { ACTIONS } from '../../context/actions'
 import { useHaptic } from '../../hooks/useHaptic'
+import { sanitizeText, sanitizeAmount } from '../../utils/sanitize'
 
 const CATEGORIAS = [
   { key: 'casa',            emoji: '🏠', label: 'Casa'     },
@@ -70,7 +71,9 @@ export default function AddTransactionSheet({ open, onClose, onSuccess, mes, ani
   }
 
   const handleSubmit = () => {
-    if (!monto || monto <= 0) return
+    const montoClean   = sanitizeAmount(monto, 1)
+    const conceptoClean = sanitizeText(concepto, 120) || 'Sin concepto'
+    if (!montoClean) return
 
     const syncCard = metodo === 'Tarjeta Débito' && tarjetaId
       ? tarjetas.find(t => t.id === tarjetaId)
@@ -85,30 +88,30 @@ export default function AddTransactionSheet({ open, onClose, onSuccess, mes, ani
         type: ACTIONS.UPDATE_TRANSACCION,
         id: transaction.id,
         mes, anio,
-        payload: { concepto: concepto || 'Sin concepto', categoria, monto, metodo, tarjetaId, cardSynced: !!syncCard },
+        payload: { concepto: conceptoClean, categoria, monto: montoClean, metodo, tarjetaId, cardSynced: !!syncCard },
       })
 
       if (oldSyncCard && syncCard) {
         if (oldSyncCard.id === syncCard.id) {
-          const delta = transaction.monto - monto
+          const delta = transaction.monto - montoClean
           if (delta !== 0) dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + delta } })
         } else {
           dispatch({ type: ACTIONS.UPDATE_TARJETA, id: oldSyncCard.id, payload: { saldoActual: (oldSyncCard.saldoActual || 0) + transaction.monto } })
-          dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) - monto } })
+          dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) - montoClean } })
         }
       } else if (oldSyncCard && !syncCard) {
         dispatch({ type: ACTIONS.UPDATE_TARJETA, id: oldSyncCard.id, payload: { saldoActual: (oldSyncCard.saldoActual || 0) + transaction.monto } })
       } else if (!oldSyncCard && syncCard) {
-        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) - monto } })
+        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) - montoClean } })
       }
     } else {
       dispatch({
         type: ACTIONS.ADD_TRANSACCION,
         mes, anio,
-        payload: { concepto: concepto || 'Sin concepto', categoria, monto, metodo, tarjetaId, cardSynced: !!syncCard },
+        payload: { concepto: conceptoClean, categoria, monto: montoClean, metodo, tarjetaId, cardSynced: !!syncCard },
       })
       if (syncCard) {
-        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) - monto } })
+        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) - montoClean } })
       }
     }
 
@@ -135,6 +138,7 @@ export default function AddTransactionSheet({ open, onClose, onSuccess, mes, ani
             className="input-field"
             type="text"
             placeholder="¿En qué gastaste?"
+            maxLength={120}
             value={concepto}
             onChange={e => setConcepto(e.target.value)}
           />

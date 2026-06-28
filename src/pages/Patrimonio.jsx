@@ -5,6 +5,7 @@ import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { calcTotalPatrimonio } from '../utils/calculations'
 import { formatCOP } from '../utils/formatCurrency'
+import { sanitizeText, sanitizeAmount } from '../utils/sanitize'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
 import Sheet from '../components/ui/Sheet'
@@ -72,8 +73,10 @@ export default function Patrimonio() {
   }
 
   const handleAdd = () => {
-    if (!nombre || !valor) return
-    dispatch({ type: ACTIONS.ADD_ACTIVO, payload: { nombre, tipo, emoji, valorActual: valor } })
+    const nombreClean = sanitizeText(nombre, 80)
+    const valorClean = sanitizeAmount(valor, 1)
+    if (!nombreClean || !valorClean) return
+    dispatch({ type: ACTIONS.ADD_ACTIVO, payload: { nombre: nombreClean, tipo, emoji, valorActual: valorClean } })
     haptic.success()
     showToast({ message: 'Activo agregado ✓' })
     setAddOpen(false)
@@ -81,8 +84,10 @@ export default function Patrimonio() {
   }
 
   const handleUpdate = () => {
-    if (!editNombre || !editValor) return
-    dispatch({ type: ACTIONS.UPDATE_ACTIVO, id: editActivo.id, payload: { nombre: editNombre, tipo: editTipo, emoji: editEmoji, valorActual: editValor } })
+    const nombreClean = sanitizeText(editNombre, 80)
+    const valorClean = sanitizeAmount(editValor, 1)
+    if (!nombreClean || !valorClean) return
+    dispatch({ type: ACTIONS.UPDATE_ACTIVO, id: editActivo.id, payload: { nombre: nombreClean, tipo: editTipo, emoji: editEmoji, valorActual: valorClean } })
     haptic.success()
     showToast({ message: 'Activo actualizado ✓' })
     setEditActivo(null)
@@ -240,11 +245,11 @@ export default function Patrimonio() {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
             <div>
               <label className="input-label">Ícono</label>
-              <input className="input-field" value={emoji} onChange={e => setEmoji(e.target.value)} style={{ width: '60px', textAlign: 'center', fontSize: '24px' }} />
+              <input className="input-field" value={emoji} maxLength={5} onChange={e => setEmoji(e.target.value)} style={{ width: '60px', textAlign: 'center', fontSize: '24px' }} />
             </div>
             <div style={{ flex: 1 }}>
               <label className="input-label">Nombre</label>
-              <input className="input-field" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Departamento, inversión..." />
+              <input className="input-field" value={nombre} maxLength={80} onChange={e => setNombre(e.target.value)} placeholder="Departamento, inversión..." />
             </div>
           </div>
           <div>
@@ -279,11 +284,11 @@ export default function Patrimonio() {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
             <div>
               <label className="input-label">Ícono</label>
-              <input className="input-field" value={editEmoji} onChange={e => setEditEmoji(e.target.value)} style={{ width: '60px', textAlign: 'center', fontSize: '24px' }} />
+              <input className="input-field" value={editEmoji} maxLength={5} onChange={e => setEditEmoji(e.target.value)} style={{ width: '60px', textAlign: 'center', fontSize: '24px' }} />
             </div>
             <div style={{ flex: 1 }}>
               <label className="input-label">Nombre</label>
-              <input className="input-field" value={editNombre} onChange={e => setEditNombre(e.target.value)} />
+              <input className="input-field" value={editNombre} maxLength={80} onChange={e => setEditNombre(e.target.value)} />
             </div>
           </div>
           <div>

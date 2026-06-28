@@ -5,6 +5,7 @@ import { useFinance } from '../context/FinanceContext'
 import { ACTIONS } from '../context/actions'
 import { calcTotalesPersonal, calcTotalesMes } from '../utils/calculations'
 import { formatCOP } from '../utils/formatCurrency'
+import { sanitizeText, sanitizeAmount } from '../utils/sanitize'
 import { nombreMes, formatFechaHora } from '../utils/dateHelpers'
 import PageLayout from '../components/layout/PageLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -87,13 +88,14 @@ export default function Personal() {
   }
 
   const handleSaveCat = () => {
-    if (!catNombre.trim()) return
+    const nombreClean = sanitizeText(catNombre, 60)
+    if (!nombreClean) return
     if (editCatKey) {
-      dispatch({ type: ACTIONS.UPDATE_CATEGORIA, key: editCatKey, nombre: catNombre.trim(), emoji: catEmoji })
+      dispatch({ type: ACTIONS.UPDATE_CATEGORIA, key: editCatKey, nombre: nombreClean, emoji: catEmoji })
       showToast({ message: 'Categoría actualizada ✓' })
     } else {
       const key = `cat_${crypto.randomUUID().slice(0, 8)}`
-      dispatch({ type: ACTIONS.ADD_CATEGORIA, key, nombre: catNombre.trim(), emoji: catEmoji })
+      dispatch({ type: ACTIONS.ADD_CATEGORIA, key, nombre: nombreClean, emoji: catEmoji })
       showToast({ message: 'Categoría creada ✓' })
     }
     setCatSheet(false)
@@ -121,7 +123,7 @@ export default function Personal() {
       key: budgetQuickKey,
       nombre: cat.nombre || NOMBRES_CAT[budgetQuickKey] || budgetQuickKey,
       emoji: cat.emoji,
-      presupuesto: budgetQuickVal,
+      presupuesto: sanitizeAmount(budgetQuickVal, 0),
     })
     showToast({ message: 'Presupuesto actualizado ✓' })
     setBudgetQuickSheet(false)
@@ -154,32 +156,34 @@ export default function Personal() {
   }
 
   const handleSaveIngreso = () => {
-    if (!iFuente.trim() || !iMonto) return
+    const fuenteClean = sanitizeText(iFuente, 80)
+    const montoClean  = sanitizeAmount(iMonto, 1)
+    if (!fuenteClean || !montoClean) return
     const syncCard = iTarjetaId ? tarjetasDebito.find(t => t.id === iTarjetaId) : null
     if (editIngreso) {
       const oldSyncCard = editIngreso.cardSynced && editIngreso.tarjetaId
         ? tarjetasDebito.find(t => t.id === editIngreso.tarjetaId)
         : null
-      dispatch({ type: ACTIONS.UPDATE_INGRESO_MES, id: editIngreso.id, mes: mesActual, anio: anioActual, payload: { fuente: iFuente.trim(), monto: iMonto, tarjetaId: iTarjetaId, cardSynced: !!syncCard } })
+      dispatch({ type: ACTIONS.UPDATE_INGRESO_MES, id: editIngreso.id, mes: mesActual, anio: anioActual, payload: { fuente: fuenteClean, monto: montoClean, tarjetaId: iTarjetaId, cardSynced: !!syncCard } })
       if (oldSyncCard && syncCard) {
         if (oldSyncCard.id === syncCard.id) {
-          const delta = iMonto - editIngreso.monto
+          const delta = montoClean - editIngreso.monto
           if (delta !== 0) dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + delta } })
         } else {
           dispatch({ type: ACTIONS.UPDATE_TARJETA, id: oldSyncCard.id, payload: { saldoActual: (oldSyncCard.saldoActual || 0) - editIngreso.monto } })
-          dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + iMonto } })
+          dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + montoClean } })
         }
       } else if (oldSyncCard && !syncCard) {
         dispatch({ type: ACTIONS.UPDATE_TARJETA, id: oldSyncCard.id, payload: { saldoActual: (oldSyncCard.saldoActual || 0) - editIngreso.monto } })
       } else if (!oldSyncCard && syncCard) {
-        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + iMonto } })
+        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + montoClean } })
       }
       haptic.success()
       showToast({ message: 'Ingreso actualizado ✓' })
     } else {
-      dispatch({ type: ACTIONS.ADD_INGRESO_MES, mes: mesActual, anio: anioActual, payload: { fuente: iFuente.trim(), monto: iMonto, tarjetaId: iTarjetaId, cardSynced: !!syncCard } })
+      dispatch({ type: ACTIONS.ADD_INGRESO_MES, mes: mesActual, anio: anioActual, payload: { fuente: fuenteClean, monto: montoClean, tarjetaId: iTarjetaId, cardSynced: !!syncCard } })
       if (syncCard) {
-        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + iMonto } })
+        dispatch({ type: ACTIONS.UPDATE_TARJETA, id: syncCard.id, payload: { saldoActual: (syncCard.saldoActual || 0) + montoClean } })
       }
       haptic.success()
       showToast({ message: 'Ingreso agregado ✓' })
@@ -639,11 +643,11 @@ export default function Personal() {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
             <div>
               <label className="input-label">Ícono</label>
-              <input className="input-field" value={catEmoji} onChange={e => setCatEmoji(e.target.value)} style={{ width: '64px', textAlign: 'center', fontSize: '24px' }} />
+              <input className="input-field" value={catEmoji} maxLength={5} onChange={e => setCatEmoji(e.target.value)} style={{ width: '64px', textAlign: 'center', fontSize: '24px' }} />
             </div>
             <div style={{ flex: 1 }}>
               <label className="input-label">Nombre</label>
-              <input className="input-field" value={catNombre} onChange={e => setCatNombre(e.target.value)} placeholder="Casa, Comida..." />
+              <input className="input-field" value={catNombre} maxLength={60} onChange={e => setCatNombre(e.target.value)} placeholder="Casa, Comida..." />
             </div>
           </div>
 
@@ -696,7 +700,7 @@ export default function Personal() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
             <label className="input-label">Fuente</label>
-            <input className="input-field" value={iFuente} onChange={e => setIFuente(e.target.value)} placeholder="Salario, freelance, arriendo..." autoFocus={ingresoSheet} />
+            <input className="input-field" value={iFuente} maxLength={80} onChange={e => setIFuente(e.target.value)} placeholder="Salario, freelance, arriendo..." autoFocus={ingresoSheet} />
           </div>
           <div>
             <label className="input-label">Monto recibido</label>
