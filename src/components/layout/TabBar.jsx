@@ -17,9 +17,6 @@ const PERSONAL_TABS = [
 const ESTUDIO_TABS = [
   { to: '/',         icon: Home,           label: 'Inicio'         },
   { to: '/estudio',  icon: Building2,      label: 'Estudio'        },
-  { to: '/metas',    icon: Target,         label: 'Metas de ahorro'},
-  { to: '/deudas',   icon: DollarSign,     label: 'Deudas'         },
-  { to: '/tarjetas', icon: CreditCard,     label: 'Tarjetas'       },
   { to: '/mas',      icon: MoreHorizontal, label: 'Más'            },
 ]
 

@@ -46,11 +46,11 @@ function AppRoutes() {
           <Route path="/personal/mes/:num"     element={<PersonalMes />} />
           <Route path="/estudio"               element={mode === 'estudio' ? <Estudio /> : <Navigate to="/" replace />} />
           <Route path="/mas"                   element={<Mas />} />
-          <Route path="/deudas"                element={<Deudas />} />
-          <Route path="/metas"                 element={<Metas />} />
-          <Route path="/patrimonio"            element={<Patrimonio />} />
+          <Route path="/deudas"                element={mode === 'personal' ? <Deudas />    : <Navigate to="/" replace />} />
+          <Route path="/metas"                 element={mode === 'personal' ? <Metas />     : <Navigate to="/" replace />} />
+          <Route path="/patrimonio"            element={mode === 'personal' ? <Patrimonio /> : <Navigate to="/" replace />} />
           <Route path="/ajustes"               element={<Ajustes />} />
-          <Route path="/tarjetas"              element={<Tarjetas />} />
+          <Route path="/tarjetas"              element={mode === 'personal' ? <Tarjetas />  : <Navigate to="/" replace />} />
           <Route path="/ajustes/2fa"           element={<SetupTwoFactorPage />} />
         </Routes>
       </Suspense>

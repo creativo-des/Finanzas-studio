@@ -21,10 +21,6 @@ const NAV_PERSONAL = [
 const NAV_ESTUDIO = [
   { to: '/',              icon: Home,         label: 'Inicio'        },
   { to: '/estudio',       icon: Building2,    label: 'Estudio'       },
-  { to: '/tarjetas',      icon: CreditCard,   label: 'Tarjetas'      },
-  { to: '/deudas',        icon: TrendingDown, label: 'Deudas'        },
-  { to: '/metas',         icon: Target,       label: 'Metas'         },
-  { to: '/patrimonio',    icon: Briefcase,    label: 'Patrimonio'    },
   { to: '/mas',           icon: RefreshCw,    label: 'Sincronizar'   },
   { to: '/ajustes',       icon: Settings,     label: 'Ajustes'       },
 ]
